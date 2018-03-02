@@ -9,7 +9,7 @@ function initMap()
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 12,
         center: {lat: 50.216680, lng: 17.857814},
-        mapTypeId: 'terrain',
+        mapTypeId: 'hybrid',
         disableDefaultUI: true,
         zoomControl: true
     });

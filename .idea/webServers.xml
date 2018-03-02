@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="c1000094-05f6-44cf-be59-051dc2f1cbef" name="xampp apache" url="http://localhost/jurekProject">
+        <fileTransfer port="0" mountedRoot="E:\program\xampp\htdocs\jurekProject" accessType="MOUNT" />
+      </webServer>
+    </option>
+  </component>
+</project>
