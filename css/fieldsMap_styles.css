@@ -1,3 +1,9 @@
+html, body
+{
+    height:100%;
+    width: 100%;
+}
+
 #container
 {
     margin-left: auto;
@@ -19,15 +25,32 @@
     float:left;
 }
 
-#userMenu
+#menu
 {
     float:left;
     height:100%;
     flex:1;
+    display: -webkit-box;
+    display: -moz-box;
+    display: -ms-flexbox;
+    display: -moz-flex;
+    display: -webkit-flex;
+    display: flex;
+    flex-direction: column;
 }
 
-html, body
+#userMenu
 {
-    height:100%;
-    width: 100%;
+    width:100%;
+    clear:both;
+    flex: 20;
 }
+
+#bottomMenu
+{
+    width:100%;
+    clear:both;
+    flex: 1;
+}
+
+

@@ -1,5 +1,10 @@
 <?php
     session_start();
+    if(!isset($_SESSION['logged']))
+    {
+        header('Location: index.php');
+        exit();
+    }
 ?>
 <!DOCTYPE html>
 <html lang="pl">
@@ -14,12 +19,19 @@
         <div id = "map">
             <script type = "text/javascript" src = "js/mapScript.js"></script>
         </div>
-        <div id = "userMenu">
-            Testowy tekst
-            <br/>
-            <br/>
-            <input id = "createPolygon" type = "button" value = "create polygon" onclick="createPolygonFromMarkers();" />
-            <input id = "removePolygon" type = "button" value = "remove polygon" onclick="removePolygon();"/>
+        <div id = "menu">
+            <div id = "userMenu">
+                Testowy tekst
+                <br/>
+                <br/>
+                <input id = "createPolygon" type = "button" value = "create polygon" onclick="createPolygonFromMarkers();" />
+                <input id = "removePolygon" type = "button" value = "remove polygon" onclick="removePolygon();"/>
+            </div>
+            <div id = "bottomMenu">
+                <form action="logout.php">
+                    <input type = "submit" style="float: right; margin-right: 30px" id="logout" type = "button" value = "Wyloguj"/>
+                </form>
+            </div>
         </div>
     </div>
     <div style = "clear:both" ></div>

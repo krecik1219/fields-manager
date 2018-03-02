@@ -1,3 +1,11 @@
+<?php
+    session_start();
+    if(isset($_SESSION['logged']) && $_SESSION['logged'])
+    {
+        header('Location: fieldsMap.php');
+        exit();
+    }
+?>
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -13,6 +21,12 @@
             Hasło: <br/> <input type="password" name="pass" /> <br/>
             <input type="submit" value="Zaloguj się" />
         </form>
+        <?php
+            if(isset($_SESSION['error']))
+            {
+                echo $_SESSION['error'];
+            }
+        ?>
     </div>
     <div style = "clear:both" ></div>
 </body>
