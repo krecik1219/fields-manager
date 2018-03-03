@@ -15,13 +15,13 @@
     else
     {
         $login = htmlentities($_POST['login'], ENT_QUOTES, "UTF-8");
-        $pass = htmlentities($_POST['pass'], ENT_QUOTES, "UTF-8");
+        $pass = $_POST['pass'];
 
-        $sql_query = "SELECT * FROM users WHERE login=? AND password = ?";
+        $sql_query = "SELECT * FROM users WHERE login=?";
 
         if($stmt = $connection->prepare($sql_query))
         {
-            if($stmt->bind_param("ss", $login, $pass))
+            if($stmt->bind_param("s", $login))
             {
                 if($stmt->execute())
                 {
@@ -30,13 +30,21 @@
                     $users_number = $query_result->num_rows;
                     if($users_number>0)  // logged successfully
                     {
-                        unset($_SESSION['error']);  // unset session error variable when user finally logs in
-                        $_SESSION['logged'] = true;
                         $row = $query_result->fetch_assoc();
-                        $result_login = $row['login'];
-                        $query_result->free_result();
-                        $_SESSION['user'] = $result_login;
-                        header('Location: fieldsMap.php');
+                        if(password_verify($pass, $row['password']))
+                        {
+                            unset($_SESSION['error']);  // unset session error variable when user finally logs in
+                            $_SESSION['logged'] = true;
+                            $result_login = $row['login'];
+                            $query_result->free_result();
+                            $_SESSION['user'] = $result_login;
+                            header('Location: fieldsMap.php');
+                        }
+                        else
+                        {
+                            $_SESSION['error'] = '<span style = "color:red">Nieprawidłowy login lub hasło!</span>';
+                            header('Location: index.php');
+                        }
                     }
                     else
                     {

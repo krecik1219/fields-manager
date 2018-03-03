@@ -16,6 +16,8 @@
 </head>
 <body>
     <div id="container" >
+        <a href="registration.php">Zarajestruj się</a>
+        <br/><br/>
         <form id = "loginForm" action="login.php" method="post">
             Login: <br/> <input type="text" name="login"/> <br/>
             Hasło: <br/> <input type="password" name="pass" /> <br/>
