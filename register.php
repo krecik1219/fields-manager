@@ -17,13 +17,11 @@
         {
             $validation_flag=false;
             $_SESSION['e_login'] = "Nick musi posiadać od 3 do 30 znaków";
-            header('Location: registration.php');
         }
         if(!ctype_alnum($login))
         {
             $validation_flag = false;
             $_SESSION['e_login'] = "Login może składać się tylko z liter i cyfr (bez polskich znaków)";
-            header('Location: registration.php');
         }
         $email = $_POST['email'];
         $email_sanitized = filter_var($email, FILTER_SANITIZE_EMAIL);
@@ -31,7 +29,6 @@
         {
             $validation_flag = false;
             $_SESSION['e_email'] = "Niepoprawny email";
-            header('Location: registration.php');
         }
         $pass1 = $_POST['pass1'];
         $pass2 = $_POST['pass2'];
@@ -39,20 +36,17 @@
         {
             $validation_flag = false;
             $_SESSION['e_pass'] = "Hasło musi składać od 8 do 20 znaków";
-            header('Location: registration.php');
         }
         if($pass1 != $pass2)
         {
             $validation_flag = false;
             $_SESSION['e_pass'] = "Podane hasła nie są identyczne";
-            header('Location: registration.php');
         }
         $hashed_pass = password_hash($pass1, PASSWORD_DEFAULT);
         if(!isset($_POST['regulations']))
         {
             $validation_flag = false;
             $_SESSION['e_regulations'] = "Należy zaakceptować regulamin";
-            header('Location: registration.php');
         }
 
         $captcha_secret = "6LcQM0oUAAAAAGeBUNzxFGnzUGUjRhi633lTzjUm";
@@ -62,7 +56,6 @@
         {
             $validation_flag = false;
             $_SESSION['e_captcha'] = "Potwierdź, że nie jesteś botem";
-            header('Location: registration.php');
         }
 
         require_once "connect.php";
@@ -71,10 +64,11 @@
         if($connection->connect_errno!=0)  // check if any error occured when connecting
         {
             echo "Error: ".$connection->connect_errno;
+            exit();
         }
         else
         {
-           // check if email already in database
+            // check if email already in database
             $result = $connection->query("SELECT id_u FROM users WHERE email='$email'");
             if($result)
             {
@@ -82,26 +76,56 @@
                 {
                     $validation_flag = false;
                     $_SESSION['e_email'] = "Email już w użyciu";
-                    header('Location: registration.php');
                 }
-                //todo implement rest tests, and finally registration
             }
             else
             {
                 $validation_flag = false;
+                $connection->close();
                 echo '<span style = "color: red;">Błąd serwera!</span>';
                 exit();
             }
 
-
+            // check login exists
+            $result = $connection->query("SELECT id_u FROM users WHERE login='$login'");
+            if($result)
+            {
+                if($result->num_rows > 0)
+                {
+                    $validation_flag = false;
+                    $_SESSION['e_login'] = "Login już w użyciu";
+                }
+            }
+            else
+            {
+                $validation_flag = false;
+                $connection->close();
+                echo '<span style = "color: red;">Błąd serwera!</span>';
+                exit();
+            }
+            if($validation_flag)  // all tests passed - register him
+            {
+                $sql_query = "INSERT INTO users VALUES(NULL, ?, ?, ?)";
+                $stmt = $connection->prepare($sql_query);
+                $login = htmlentities($login, ENT_QUOTES, "UTF-8");
+                $stmt->bind_param("sss", $login, $email, $hashed_pass);
+                if($stmt->execute())
+                {
+                    $_SESSION['registration_success'] = true;
+                    header('Location: welcome.php');
+                }
+                else
+                {
+                    $connection->close();
+                    echo '<span style = "color: red;">Błąd serwera!</span>';
+                    exit();
+                }
+            }
+            else
+            {
+                header('Location: registration.php');
+            }
             $connection->close();  // remember to close connection!
-        }
-
-
-        if($validation_flag)  // all tests passed - register him
-        {
-            echo "validation passed";
-            exit();
         }
     }
 ?>
