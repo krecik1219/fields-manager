@@ -118,8 +118,39 @@
         }
         $counter++;
     }
-    //$sql_query = "SELECT id_plant FROM planted WHERE id_field = 1";
-    //todo finish fetching data
+    $planted_array = array();
+    $counter = 0;
+    foreach($fields_array as $field)
+    {
+        $id_field = $field['id_field'];
+        $sql_query = "SELECT id_plant FROM planted WHERE id_field ='$id_field'";
+        $planted_array[] = array('id_field'=>$id_field);
+        if($result = $connection->query($sql_query))
+        {
+            while($row = $result->fetch_assoc())
+            {
+                $planted_array[$counter][] = ["planted"=>$row];
+            }
+            $result->free_result();
+        }
+        else
+        {
+            $connection->close();
+            echo '<span style = "color:red">Błąd serwera!</span>';
+            exit();
+        }
+        $counter++;
+    }
+    $result_data = array();
+    $result_data['places_array']=$places_array;
+    $result_data['plants_array']=$plants_array;
+    $result_data['colors_array']=$colors_array;
+    $result_data['fields_array']=$fields_array;
+    $result_data['coor_array']=$coor_array;
+    $result_data['planted_array']=$planted_array;
 
     $connection->close();
+
+    // return json data
+    echo json_encode($result_data);
 ?>
