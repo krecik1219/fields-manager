@@ -20,7 +20,7 @@
     <meta charset="UTF-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
     <title>Mapa działek</title>
-    <link rel="stylesheet" type="text/css" href="css/fieldsMap_styles.css"/>
+    <link rel="stylesheet" type="text/css" href="css/fields-map-styles.css"/>
 </head>
 <body>
     <div id = "container">
@@ -108,8 +108,8 @@
     <div style = "clear:both" ></div>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBeheJaSAo9RkDQFtCJLKfbJgRCW1NvvEs&callback=initMap" async defer></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script type = "text/javascript" src = "js/mapScript.js"></script>
-<script src="js/stylingFunctions.js"></script>
+<script type = "text/javascript" src = "js/map-script.js"></script>
+<script src="js/styling-functions.js"></script>
 </body>
 </html>
 <?php

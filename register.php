@@ -78,6 +78,7 @@
                     $validation_flag = false;
                     $_SESSION['e_email'] = "Email już w użyciu";
                 }
+                $result->free_result();
             }
             else
             {
@@ -96,6 +97,7 @@
                     $validation_flag = false;
                     $_SESSION['e_login'] = "Login już w użyciu";
                 }
+                $result->free_result();
             }
             else
             {
