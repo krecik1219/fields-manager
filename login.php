@@ -11,9 +11,11 @@
     if($connection->connect_errno!=0)  // check if any error occured when connecting
     {
         echo "Error: ".$connection->connect_errno;
+        exit();
     }
     else
     {
+        $connection->set_charset("utf8");
         $login = htmlentities($_POST['login'], ENT_QUOTES, "UTF-8");
         $pass = $_POST['pass'];
 

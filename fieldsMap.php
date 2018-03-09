@@ -25,7 +25,6 @@
 <body>
     <div id = "container">
         <div id = "map">
-            <script type = "text/javascript" src = "js/mapScript.js"></script>
         </div>
         <div id = "menu">
             <div id = "userMenu">
@@ -34,7 +33,12 @@
                 <br/>
                 <input id = "createPolygon" type = "button" value = "create polygon" onclick="createPolygonFromMarkers();" />
                 <input id = "removePolygon" type = "button" value = "remove polygon" onclick="removePolygon();"/>
-                <div id="editing" style="margin-top: 40px;">
+                <form id = "mode_selector">
+                    Swobodne przegladanie <input type="radio" name="mode" value="explore" checked /> <br/>
+                    Utwórz nowy obszar <input type="radio" name="mode" value="create" /> <br/>
+                    Edycja <input type="radio" name="mode" value="edit" /> <br/>
+                </form>
+                <div id="editor" style="margin-top: 40px;">
                     <form id="editingForm" method="post">
                         Najbliższa miejscowość <br/>
                         <select name = "places">
@@ -52,8 +56,8 @@
                             }
                             ?>
                         </select> <br/>
-                        <br/>Pole powierzchni <br/>
-                        <input type="text" name="area" /> <br/>
+                        <br/>Pole powierzchni [ha]<br/>
+                        <input id = "area_field" type="text" name="area" /> <br/>
                         <br/>Posadzone rośliny <br/>
                         <select name = "plants[]" multiple style="width: 200px">
                             <?php
@@ -104,6 +108,7 @@
     <div style = "clear:both" ></div>
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBeheJaSAo9RkDQFtCJLKfbJgRCW1NvvEs&callback=initMap" async defer></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<script type = "text/javascript" src = "js/mapScript.js"></script>
 <script src="js/stylingFunctions.js"></script>
 </body>
 </html>

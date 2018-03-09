@@ -3,6 +3,13 @@ var currentlySelectedMarkers = [];
 var polygons = [];
 var borderLine = null;
 var selectedPolygon = null;
+var infoWindows = [];
+
+var mode_selector = $('#mode_selector').find('input[type=radio]');
+mode_selector.change(function() {
+    mode = $('#mode_selector').find('input[type=radio]:checked').val();
+});
+var mode = mode_selector.filter(':checked').val();
 
 function initMap()
 {
@@ -16,7 +23,7 @@ function initMap()
 
     google.maps.event.addListener(map, 'click', function(event){
         console.log(typeof event.latLng);
-        setMarker(event.latLng, map);
+        mapOnClick(event.latLng);
     });
 }
 
@@ -43,7 +50,7 @@ function drawBorderLine()
         {
             coordinates.push(currentlySelectedMarkers[i].getPosition());
         }
-        coordinates.push(currentlySelectedMarkers[0].getPosition());
+        coordinates.push(currentlySelectedMarkers[0].getPosition());  // to close the shape
         borderLine = new google.maps.Polyline({
             path: coordinates,
             geodesic: true,
@@ -64,6 +71,7 @@ function addMarker(marker)
 {
     currentlySelectedMarkers.push(marker);
     drawBorderLine();
+    displayCurrentSelectedAreaVal();
 }
 
 function removeMarker(marker)
@@ -80,7 +88,36 @@ function setListenerForMarker(marker)
     });
 }
 
-function setMarker(location, map)
+function mapOnClick(location)
+{
+    switch(mode)
+    {
+        case 'create':
+        {
+            setMarker(location);
+        }
+        break;
+        default:
+        {
+            resetCurrentlySelectedPolygon();
+        }
+        break;
+    }
+}
+
+function resetCurrentlySelectedPolygon()
+{
+    if(selectedPolygon!==null)
+        selectedPolygon.setOptions({fillColor: '#ff0000'});
+    selectedPolygon = null;
+    for(var i =0; i<infoWindows.length; i++)
+    {
+        infoWindows[i].close();
+    }
+    infoWindows = [];
+}
+
+function setMarker(location)
 {
     var marker = new google.maps.Marker(
         {
@@ -107,12 +144,29 @@ function removePolygon()
 function onPolygonClick(event, polygon)
 {
     console.log("polygon clicked");
+    resetCurrentlySelectedPolygon();
+    polygon.setOptions({fillColor:'#00ffff'});
     selectedPolygon = polygon;
     var infoWindow = new google.maps.InfoWindow({
         content: getContentForPolygon(polygon),
         position: event.latLng
     });
+    infoWindows.push(infoWindow);
+    google.maps.event.addListener(infoWindow, 'closeclick', function(event)
+    {
+        onInfoWindowCloseClick(event, polygon, infoWindow);
+    });
     infoWindow.open(map);
+}
+
+function onInfoWindowCloseClick(event, polygon, infoWindow)
+{
+    if(polygon!==null)
+    {
+        polygon.setOptions({fillColor:'#FF0000'});
+        selectedPolygon = null;
+    }
+    removeFromArray(infoWindows, infoWindow);
 }
 
 function getContentForPolygon(polygon)
@@ -165,4 +219,31 @@ function createPolygonFromMarkers()
         return null;
 }
 
-var polygonContentString = '<div id = "content">Donec bibendum ex eu hendrerit mattis. Ut faucibus, metus ut elementum gravida, mauris quam tristique leo, ac tincidunt dolor mi sit amet nunc. Donec at augue nulla. In quis magna nec tellus tristique ultricies vel non tellus. Curabitur euismod quis orci dictum congue. Fusce eget egestas massa. Etiam laoreet vehicula turpis, quis scelerisque tortor iaculis sit amet. Donec malesuada elementum libero, ut rutrum purus cursus eu. Praesent sodales sem a varius aliquam. Mauris sit amet enim in augue commodo tristique. Quisque leo tellus, porttitor eu mi non, tincidunt volutpat massa. Sed ut ante quis leo feugiat accumsan et a nibh. Vivamus id nisl non risus ultrices posuere. Vivamus facilisis metus eu pellentesque faucibus. Nam imperdiet consequat eros, vitae volutpat nunc. Mauris faucibus lacus eros, quis malesuada mauris iaculis non.</div>'
+function currentAreaFromMarkers()
+{
+    if(currentlySelectedMarkers.length>2)
+    {
+        var coordinates = [];
+        for(var i = 0; i<currentlySelectedMarkers.length; i++)
+        {
+            coordinates.push(currentlySelectedMarkers[i].getPosition());
+        }
+        coordinates.push(currentlySelectedMarkers[0].getPosition());  // to close the shape
+        var squaredMeters =  google.maps.geometry.spherical.computeArea(coordinates);
+        return squaredMeters / 10000.0;
+    }
+    else
+        return 0;
+}
+
+function displayCurrentSelectedAreaVal()
+{
+    var area = currentAreaFromMarkers();
+    console.log("area: "+area);
+    var formatted_area = area.toFixed(4);
+    $('#area_field').val(formatted_area);
+}
+
+
+
+var polygonContentString = '<div id = "content">Donec bibendum ex eu hendrerit mattis. Ut faucibus, metus ut elementum gravida, mauris quam tristique leo, ac tincidunt dolor mi sit amet nunc. Donec at augue nulla. In quis magna nec tellus tristique ultricies vel non tellus. Curabitur euismod quis orci dictum congue. Fusce eget egestas massa. Etiam laoreet vehicula turpis, quis scelerisque tortor iaculis sit amet. Donec malesuada elementum libero, ut rutrum purus cursus eu. Praesent sodales sem a varius aliquam. Mauris sit amet enim in augue commodo tristique. Quisque leo tellus, porttitor eu mi non, tincidunt volutpat massa. Sed ut ante quis leo feugiat accumsan et a nibh. Vivamus id nisl non risus ultrices posuere. Vivamus facilisis metus eu pellentesque faucibus. Nam imperdiet consequat eros, vitae volutpat nunc. Mauris faucibus lacus eros, quis malesuada mauris iaculis non.</div>';

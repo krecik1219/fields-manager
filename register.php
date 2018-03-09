@@ -68,6 +68,7 @@
         }
         else
         {
+            $connection->set_charset("utf8");
             // check if email already in database
             $result = $connection->query("SELECT id_u FROM users WHERE email='$email'");
             if($result)
