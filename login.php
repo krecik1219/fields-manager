@@ -37,7 +37,7 @@
                         {
                             unset($_SESSION['error']);  // unset session error variable when user finally logs in
                             $_SESSION['logged'] = true;
-                            $result_id = $row['id_user'];
+                            $result_id = $row['id_u'];
                             $query_result->free_result();
                             $_SESSION['id_user'] = $result_id;
                             header('Location: fields-map.php');

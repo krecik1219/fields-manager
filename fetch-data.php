@@ -15,7 +15,7 @@
     $connection->set_charset("utf8");
 
     $id_user = $_SESSION['id_user'];
-    $sql_query = "SELECT id_place, place_name FROM places";
+    $sql_query = "SELECT id_place, place_name FROM places ORDER BY place_name ASC";
     // fetch data about all available places
     $places_array = array();
     if($result = $connection->query($sql_query))
@@ -34,7 +34,7 @@
         echo '<span style = "color:red">Błąd serwera!</span>';
         exit();
     }
-    $sql_query = "SELECT id_plant, plant_name FROM plants";
+    $sql_query = "SELECT id_plant, plant_name FROM plants ORDER BY plant_name ASC";
     // fetch data about all available plants
     $plants_array = array();
     if($result = $connection->query($sql_query))
@@ -96,17 +96,16 @@
     }
     // fetch data about fields' coordinates
     $coor_array = array();
-    $counter  = 0;
     foreach($fields_array as $field)
     {
         $id_field = $field['id_field'];
         $sql_query = "SELECT coordinates.id_coor, coordinates.lat, coordinates.lng FROM coordinates INNER JOIN located on coordinates.id_coor = located.id_coor WHERE located.id_field ='$id_field' ORDER BY located.number ASC";
-        $coor_array[] = array("id_field"=>$id_field);
+        $coor_array[$id_field] = array();
         if($result = $connection->query($sql_query))
         {
             while($row = $result->fetch_assoc())
             {
-                $coor_array[$counter][] = ["coordinate"=>$row];
+                $coor_array[$id_field][] = $row;
             }
             $result->free_result();
         }
@@ -116,7 +115,6 @@
             echo '<span style = "color:red">Błąd serwera!</span>';
             exit();
         }
-        $counter++;
     }
     $planted_array = array();
     $counter = 0;

@@ -1,4 +1,4 @@
-$('.plantOption').mousedown(function(e) {
+$(document).on('mousedown', '.plantOption',function(e) {
     e.preventDefault();
     var originalScrollTop = $(this).parent().scrollTop();
     console.log(originalScrollTop);
@@ -12,7 +12,7 @@ $('.plantOption').mousedown(function(e) {
     return false;
 });
 
-$('#color_list').change(function()
+$(document).on('change', '#colors',function()
 {
     var color = $('option:selected', this).css('background-color');
     $(this).css('background-color', color);

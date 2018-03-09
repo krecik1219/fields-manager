@@ -244,6 +244,97 @@ function displayCurrentSelectedAreaVal()
     $('#area_field').val(formatted_area);
 }
 
+$(document).ready(function(){
+    $.ajax({
+        url: 'fetch-data.php',
+        type: 'post',
+        dataType: 'json',
+        success: function(response){
+            loadPlaces(response);
+            loadPlants(response);
+            loadColors(response);
+            loadPolygons(response);
+        }
+    });
+});
 
+function loadPlaces(jsonResponse)
+{
+    var places = jsonResponse['places_array'];
+    var places_html = "";
+    var place=null;
+    for(var i=0; i<places.length; i++)
+    {
+        place = places[i];
+        places_html+="<option class = 'placesOption' value='"+place['id_place']+"'>"+place['place_name']+"</option>";
+    }
+    $('#places').html(places_html);
+}
+
+function loadPlants(jsonResponse)
+{
+    var plants = jsonResponse['plants_array'];
+    var plants_html = "";
+    var plant=null;
+    for(var i=0; i<plants.length; i++)
+    {
+        plant = plants[i];
+        plants_html+="<option class = 'plantOption' value='"+plant['id_plant']+"'>"+plant['plant_name']+"</option>";
+    }
+    $('#plants').html(plants_html);
+}
+
+function loadColors(jsonResponse)
+{
+    var colors = jsonResponse['colors_array'];
+    var colors_html = "";
+    var color = null;
+    for(var i = 0; i<colors.length; i++)
+    {
+        color = colors[i];
+        colors_html+="<option value='"+color['id_color']+"' style='background-color: "+color['color_hex_code']+";'></option>";
+    }
+    $('#colors').html(colors_html);
+}
+
+function loadPolygons(jsonResponse)
+{
+    //todo a bit tricky with dictionary json, problem with coordinates array (dictionary in fact)
+    var fieldsArray = jsonResponse['fields_array'];
+    var coordinatesArray = jsonResponse['coor_array'];
+    console.log("fieldsArray length: "+fieldsArray.length);
+    console.log("field 1 color: "+fieldsArray[0]['id_color']);
+    console.log("coordinatesArray length: "+Object.keys(coordinatesArray).length);
+    console.log("coor array: "+coordinatesArray);
+    console.log("coor array at some field: "+coordinatesArray['1']);
+    for(var i =0; i<fieldsArray.length; i++)
+    {
+        var coordinates = coordinatesArray[fieldsArray[i]['id_field']];
+        var latlngArray = [];
+        for(var j =0; j<coordinates.length; j++)
+        {
+            latlngArray.push({lat: coordinates[j][0], lng: coordinates[j][1]});
+        }
+        var polygon = new google.maps.Polygon({
+            paths: latlngArray,
+            strokeColor: '#FF0000',
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: '#FF0000',
+            fillOpacity: 0.35,
+            editable: false,
+            map: map
+        });
+
+        google.maps.event.addListener(polygon, 'click', function(event){
+            onPolygonClick(event, polygon);
+        });
+        console.log("coords: "+latlngArray);
+        console.log("polygon: "+polygon);
+        polygons.push(polygon);
+    }
+
+
+}
 
 var polygonContentString = '<div id = "content">Donec bibendum ex eu hendrerit mattis. Ut faucibus, metus ut elementum gravida, mauris quam tristique leo, ac tincidunt dolor mi sit amet nunc. Donec at augue nulla. In quis magna nec tellus tristique ultricies vel non tellus. Curabitur euismod quis orci dictum congue. Fusce eget egestas massa. Etiam laoreet vehicula turpis, quis scelerisque tortor iaculis sit amet. Donec malesuada elementum libero, ut rutrum purus cursus eu. Praesent sodales sem a varius aliquam. Mauris sit amet enim in augue commodo tristique. Quisque leo tellus, porttitor eu mi non, tincidunt volutpat massa. Sed ut ante quis leo feugiat accumsan et a nibh. Vivamus id nisl non risus ultrices posuere. Vivamus facilisis metus eu pellentesque faucibus. Nam imperdiet consequat eros, vitae volutpat nunc. Mauris faucibus lacus eros, quis malesuada mauris iaculis non.</div>';
