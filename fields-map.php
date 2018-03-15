@@ -60,8 +60,8 @@
     </div>
     <div style = "clear:both" ></div>
 
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBeheJaSAo9RkDQFtCJLKfbJgRCW1NvvEs"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBeheJaSAo9RkDQFtCJLKfbJgRCW1NvvEs&callback=initMap" async defer></script>
 <script type = "text/javascript" src = "js/map-data-script.js"></script>
 <script src="js/styling-functions.js"></script>
 

@@ -24,7 +24,7 @@
         {
             $id_place = $row['id_place'];
             $place_name = $row['place_name'];
-            $places_array[] = array("id_place"=>$id_place, "place_name"=>$place_name);
+            $places_array[$id_place] = array("place_name"=>$place_name);
         }
         $result->free_result();
     }
@@ -43,7 +43,7 @@
         {
             $id_plant = $row['id_plant'];
             $plant_name = $row['plant_name'];
-            $plants_array[] = array("id_plant"=>$id_plant, "plant_name"=>$plant_name);
+            $plants_array[$id_plant] = array("plant_name"=>$plant_name);
         }
         $result->free_result();
     }
@@ -62,7 +62,7 @@
         {
             $id_color = $row['id_color'];
             $color_hex_code = $row['color_hex_code'];
-            $colors_array[] = array("id_color"=>$id_color, "color_hex_code"=>$color_hex_code);
+            $colors_array[$id_color] = array("color_hex_code"=>$color_hex_code);
         }
         $result->free_result();
     }
@@ -99,7 +99,7 @@
     foreach($fields_array as $field)
     {
         $id_field = $field['id_field'];
-        $sql_query = "SELECT coordinates.id_coor, coordinates.lat, coordinates.lng FROM coordinates INNER JOIN located on coordinates.id_coor = located.id_coor WHERE located.id_field ='$id_field' ORDER BY located.number ASC";
+        $sql_query = "SELECT coordinates.lat, coordinates.lng FROM coordinates INNER JOIN located on coordinates.id_coor = located.id_coor WHERE located.id_field ='$id_field' ORDER BY located.number ASC";
         $coor_array[$id_field] = array();
         if($result = $connection->query($sql_query))
         {
@@ -117,17 +117,17 @@
         }
     }
     $planted_array = array();
-    $counter = 0;
     foreach($fields_array as $field)
     {
         $id_field = $field['id_field'];
         $sql_query = "SELECT id_plant FROM planted WHERE id_field ='$id_field'";
-        $planted_array[] = array('id_field'=>$id_field);
+        $planted_array[$id_field] = array();
         if($result = $connection->query($sql_query))
         {
             while($row = $result->fetch_assoc())
             {
-                $planted_array[$counter][] = ["planted"=>$row];
+                $id_plant=$row['id_plant'];
+                $planted_array[$id_field][] = $id_plant;
             }
             $result->free_result();
         }
@@ -137,7 +137,6 @@
             echo '<span style = "color:red">Błąd serwera!</span>';
             exit();
         }
-        $counter++;
     }
     $result_data = array();
     $result_data['places_array']=$places_array;

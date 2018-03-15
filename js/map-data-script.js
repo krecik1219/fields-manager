@@ -11,8 +11,8 @@ mode_selector.change(function() {
 });
 var mode = mode_selector.filter(':checked').val();
 
-function initMap()
-{
+//function initMap()
+//{
     map = new google.maps.Map(document.getElementById('map'), {
         zoom: 12,
         center: {lat: 50.216680, lng: 17.857814},
@@ -25,7 +25,8 @@ function initMap()
         console.log(typeof event.latLng);
         mapOnClick(event.latLng);
     });
-}
+
+//}
 
 function removeFromArray(array, element)
 {
@@ -108,7 +109,7 @@ function mapOnClick(location)
 function resetCurrentlySelectedPolygon()
 {
     if(selectedPolygon!==null)
-        selectedPolygon.setOptions({fillColor: '#ff0000'});
+        selectedPolygon.setOptions({fillColor: selectedPolygon.color});
     selectedPolygon = null;
     for(var i =0; i<infoWindows.length; i++)
     {
@@ -163,7 +164,7 @@ function onInfoWindowCloseClick(event, polygon, infoWindow)
 {
     if(polygon!==null)
     {
-        polygon.setOptions({fillColor:'#FF0000'});
+        polygon.setOptions({fillColor:polygon.color});
         selectedPolygon = null;
     }
     removeFromArray(infoWindows, infoWindow);
@@ -171,7 +172,12 @@ function onInfoWindowCloseClick(event, polygon, infoWindow)
 
 function getContentForPolygon(polygon)
 {
-    // todo: currently dummy implementation
+    var polygonContentString = "Miasto: "+polygon.city+"<br/>Pole powierzchni: "+polygon.fieldArea+"<br/>Posadzone rośliny: ";
+    var plants = "";
+    for(var i=0; i<polygon.plants.length; i++)
+        plants+=(polygon.plants[i]+", ");
+    polygonContentString+=plants.substr(0, plants.length-2);
+    polygonContentString+=("<br/>Opis: "+polygon.description);
     return polygonContentString;
 }
 
@@ -191,13 +197,18 @@ function createPolygonFromMarkers()
 
         var polygon = new google.maps.Polygon({
             paths: coordinates,
-            strokeColor: '#FF0000',
+            strokeColor: '#ffffff',
             strokeOpacity: 0.8,
             strokeWeight: 2,
-            fillColor: '#FF0000',
+            fillColor: '#ffffff',
             fillOpacity: 0.35,
             editable: false,
-            map: map
+            map: map,
+            color: '#ffffff',
+            city: '',
+            plants: '',
+            fieldArea: 0,
+            description: ''
         });
 
         google.maps.event.addListener(polygon, 'click', function(event){
@@ -244,6 +255,7 @@ function displayCurrentSelectedAreaVal()
     $('#area_field').val(formatted_area);
 }
 
+
 $(document).ready(function(){
     $.ajax({
         url: 'fetch-data.php',
@@ -263,10 +275,10 @@ function loadPlaces(jsonResponse)
     var places = jsonResponse['places_array'];
     var places_html = "";
     var place=null;
-    for(var i=0; i<places.length; i++)
+    for(var key in places)
     {
-        place = places[i];
-        places_html+="<option class = 'placesOption' value='"+place['id_place']+"'>"+place['place_name']+"</option>";
+        place = places[key];
+        places_html+="<option class = 'placesOption' value='"+key+"'>"+place['place_name']+"</option>";
     }
     $('#places').html(places_html);
 }
@@ -276,10 +288,10 @@ function loadPlants(jsonResponse)
     var plants = jsonResponse['plants_array'];
     var plants_html = "";
     var plant=null;
-    for(var i=0; i<plants.length; i++)
+    for(var key in plants)
     {
-        plant = plants[i];
-        plants_html+="<option class = 'plantOption' value='"+plant['id_plant']+"'>"+plant['plant_name']+"</option>";
+        plant = plants[key];
+        plants_html+="<option class = 'plantOption' value='"+key+"'>"+plant['plant_name']+"</option>";
     }
     $('#plants').html(plants_html);
 }
@@ -289,10 +301,10 @@ function loadColors(jsonResponse)
     var colors = jsonResponse['colors_array'];
     var colors_html = "";
     var color = null;
-    for(var i = 0; i<colors.length; i++)
+    for(var key in colors)
     {
-        color = colors[i];
-        colors_html+="<option value='"+color['id_color']+"' style='background-color: "+color['color_hex_code']+";'></option>";
+        color = colors[key];
+        colors_html+="<option value='"+key+"' style='background-color: "+color['color_hex_code']+";'></option>";
     }
     $('#colors').html(colors_html);
 }
@@ -302,39 +314,50 @@ function loadPolygons(jsonResponse)
     //todo a bit tricky with dictionary json, problem with coordinates array (dictionary in fact)
     var fieldsArray = jsonResponse['fields_array'];
     var coordinatesArray = jsonResponse['coor_array'];
-    console.log("fieldsArray length: "+fieldsArray.length);
-    console.log("field 1 color: "+fieldsArray[0]['id_color']);
-    console.log("coordinatesArray length: "+Object.keys(coordinatesArray).length);
-    console.log("coor array: "+coordinatesArray);
-    console.log("coor array at some field: "+coordinatesArray['1']);
+    var colorsArray = jsonResponse['colors_array'];
+    var placesArray = jsonResponse['places_array'];
+    var plantsArray = jsonResponse['plants_array'];
+    var plantedArray = jsonResponse['planted_array']
+
     for(var i =0; i<fieldsArray.length; i++)
     {
-        var coordinates = coordinatesArray[fieldsArray[i]['id_field']];
-        var latlngArray = [];
-        for(var j =0; j<coordinates.length; j++)
+        var coordinates = [];
+        for(var j=0; j<coordinatesArray[fieldsArray[i]['id_field']].length; j++)
         {
-            latlngArray.push({lat: coordinates[j][0], lng: coordinates[j][1]});
+            var singleCoord = coordinatesArray[fieldsArray[i]['id_field']][j];
+            coordinates.push({lat: parseFloat(singleCoord['lat']), lng: parseFloat(singleCoord['lng'])});
         }
+        var planted = [];
+        for(var j =0; j<plantedArray[fieldsArray[i]['id_field']].length; j++)
+        {
+            planted.push(plantsArray[plantedArray[fieldsArray[i]['id_field']][j]]['plant_name']);
+        }
+
         var polygon = new google.maps.Polygon({
-            paths: latlngArray,
-            strokeColor: '#FF0000',
+            paths: coordinates,
+            strokeColor: colorsArray[fieldsArray[i]['id_color']]['color_hex_code'],
             strokeOpacity: 0.8,
             strokeWeight: 2,
-            fillColor: '#FF0000',
+            fillColor: colorsArray[fieldsArray[i]['id_color']]['color_hex_code'],
             fillOpacity: 0.35,
             editable: false,
-            map: map
+            map: map,
+            color: colorsArray[fieldsArray[i]['id_color']]['color_hex_code'],
+            city: placesArray[fieldsArray[i]['id_place']]['place_name'],
+            plants: planted,
+            fieldArea: fieldsArray[i]['area'],
+            description: fieldsArray[i]['description']
         });
 
-        google.maps.event.addListener(polygon, 'click', function(event){
-            onPolygonClick(event, polygon);
-        });
-        console.log("coords: "+latlngArray);
-        console.log("polygon: "+polygon);
+        (function(polygonWrap)
+        {
+            google.maps.event.addListener(polygonWrap, 'click', function(event){
+                onPolygonClick(event, polygonWrap);
+            });
+        })(polygon);
+
         polygons.push(polygon);
     }
-
-
 }
 
 var polygonContentString = '<div id = "content">Donec bibendum ex eu hendrerit mattis. Ut faucibus, metus ut elementum gravida, mauris quam tristique leo, ac tincidunt dolor mi sit amet nunc. Donec at augue nulla. In quis magna nec tellus tristique ultricies vel non tellus. Curabitur euismod quis orci dictum congue. Fusce eget egestas massa. Etiam laoreet vehicula turpis, quis scelerisque tortor iaculis sit amet. Donec malesuada elementum libero, ut rutrum purus cursus eu. Praesent sodales sem a varius aliquam. Mauris sit amet enim in augue commodo tristique. Quisque leo tellus, porttitor eu mi non, tincidunt volutpat massa. Sed ut ante quis leo feugiat accumsan et a nibh. Vivamus id nisl non risus ultrices posuere. Vivamus facilisis metus eu pellentesque faucibus. Nam imperdiet consequat eros, vitae volutpat nunc. Mauris faucibus lacus eros, quis malesuada mauris iaculis non.</div>';
