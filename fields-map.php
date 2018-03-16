@@ -41,7 +41,7 @@
                         <select id = "plants" name = "plants" multiple style="width: 200px">
                         </select> <br/>
                         <br/>Opis <br/>
-                        <textarea name="descr" rows="8" cols = "60"></textarea> <br/>
+                        <textarea id="descr" name="descr" rows="8" cols = "60"></textarea> <br/>
                         <br/>Kolor <br/>
                         <select id = "colors" name = "color" style="width:100px;">
                         </select> <br/>

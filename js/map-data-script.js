@@ -11,7 +11,7 @@ mode_selector.change(function() {
     setUpModeFeatures();
 });
 var mode = mode_selector.filter(':checked').val();
-
+//todo change create polygon behaviour to upload object to database
 function setUpModeFeatures()
 {
     switch(mode)
@@ -56,6 +56,7 @@ function setUpEditModeFeatures()
 }
 
 setUpModeFeatures();
+
 //function initMap()
 //{
     map = new google.maps.Map(document.getElementById('map'), {
@@ -146,6 +147,7 @@ function mapOnClick(location)
         default:
         {
             resetCurrentlySelectedPolygon();
+            resetEditorsPanel();
         }
         break;
     }
@@ -161,6 +163,15 @@ function resetCurrentlySelectedPolygon()
         infoWindows[i].close();
     }
     infoWindows = [];
+}
+
+function resetEditorsPanel()
+{
+    $('#places').val(null);
+    $('#plants').val(null);
+    $('#colors').val(null);
+    $('#descr').val(null);
+    $('#area_field').val(null);
 }
 
 function setMarker(location)
@@ -210,12 +221,20 @@ function displayPolygonInfoInEditorsPanel(polygon)
 {
     var idCity = polygon.city['idCity'];
     var idColor = polygon.color['idColor'];
+    var area = polygon.fieldArea;
+    var descr = polygon.description;
     var plantsIds = [];
     for(var i=0; i<polygon.plants.length; i++)
     {
         plantsIds.push(polygon.plants[i]['idPlant']);
     }
-    //todo display those info in editors panel
+    $('#places').val(idCity);
+    var colorSelector = $('#colors');
+    colorSelector.val(idColor);
+    colorSelector.trigger('change');
+    $('#area_field').val(area);
+    $('#descr').val(descr);
+    $('#plants').val(plantsIds);
 }
 
 function onInfoWindowCloseClick(event, polygon, infoWindow)
@@ -324,6 +343,7 @@ $(document).ready(function(){
             loadPlants(response);
             loadColors(response);
             loadPolygons(response);
+            resetEditorsPanel();
         }
     });
 });
@@ -369,7 +389,6 @@ function loadColors(jsonResponse)
 
 function loadPolygons(jsonResponse)
 {
-    //todo a bit tricky with dictionary json, problem with coordinates array (dictionary in fact)
     var fieldsArray = jsonResponse['fields_array'];
     var coordinatesArray = jsonResponse['coor_array'];
     var colorsArray = jsonResponse['colors_array'];

@@ -1,10 +1,8 @@
 $(document).on('mousedown', '.plantOption',function(e) {
-    var isEnabled = $('#plants').disabled;
-    if(isEnabled)
+    if(!$('#plants').prop('disabled'))
     {
         e.preventDefault();
         var originalScrollTop = $(this).parent().scrollTop();
-        console.log(originalScrollTop);
         $(this).prop('selected', $(this).prop('selected') ? false : true);
         var self = this;
         $(this).parent().focus();
@@ -12,7 +10,8 @@ $(document).on('mousedown', '.plantOption',function(e) {
             $(self).parent().scrollTop(originalScrollTop);
         }, 0);
     }
-        return false;
+
+    return false;
 });
 
 $(document).on('change', '#colors',function()
