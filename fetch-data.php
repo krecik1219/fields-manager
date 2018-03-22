@@ -138,6 +138,8 @@
             exit();
         }
     }
+    $connection->close();
+
     $result_data = array();
     $result_data['places_array']=$places_array;
     $result_data['plants_array']=$plants_array;
@@ -145,8 +147,6 @@
     $result_data['fields_array']=$fields_array;
     $result_data['coor_array']=$coor_array;
     $result_data['planted_array']=$planted_array;
-
-    $connection->close();
 
     // return json data
     echo json_encode($result_data);
