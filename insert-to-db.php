@@ -1,11 +1,4 @@
 <?php
-    function debug_to_console( $data ) {
-        $output = $data;
-        if ( is_array( $output ) )
-            $output = implode( ',', $output);
-
-        echo "<script>console.log( 'Debug Objects: " . $output . "' );</script>";
-    }
     session_start();
     if(!isset($_SESSION['logged']))
     {
@@ -21,7 +14,7 @@
     $connection = @new mysqli($host, $db_user, $db_password, $db_name);
     if($connection->errno!=0)
     {
-        echo json_encode(array('result'=>$connection->error));
+        echo json_encode(array('result'=>$connection->errno));
         exit();
     }
     $connection->set_charset("utf8");
@@ -49,7 +42,7 @@
             throw new Exception("insert field error");
         $stmt->bind_param("iidis", $id_user, $id_place, $area, $id_color, $description);
         if(!$stmt->execute())
-            throw new Exception("insert field query execute error: ".$stmt->errno." ; ".$stmt->error);
+            throw new Exception("insert field query execute error: ".$stmt->errno);
         $id_field = $connection->insert_id;
 
         foreach($plants as $id_plant)
@@ -102,6 +95,6 @@
     }
     $connection->close();
 
-    $result = array("result"=>"Pole dodano do bazy");
+    $result = array("result"=>"Pole dodano do bazy", "id_field"=>$id_field);
     echo json_encode($result);
 ?>

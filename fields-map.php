@@ -46,7 +46,7 @@
                         <select id = "colors" name = "color" style="width:100px;">
                         </select> <br/>
                         <br/>
-                        <input type="submit" value = "Zapisz zmiany" />
+                        <input type="button" value = "Zapisz zmiany" onclick="confirmChanges();"/>
 
                     </form>
                 </div>
