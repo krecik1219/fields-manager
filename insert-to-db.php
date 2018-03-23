@@ -10,14 +10,7 @@
         header('Location: fields-map.php');
         exit();
     }
-    require_once "connect.php";
-    $connection = @new mysqli($host, $db_user, $db_password, $db_name);
-    if($connection->errno!=0)
-    {
-        echo json_encode(array('result'=>$connection->errno));
-        exit();
-    }
-    $connection->set_charset("utf8");
+
     $id_user = $_SESSION['id_user'];
 
     $my_data = $_POST['myData'];
@@ -30,6 +23,14 @@
         $plants=array();
     $coordinates = $my_data['coordinates'];
 
+    require_once "connect.php";
+    $connection = @new mysqli($host, $db_user, $db_password, $db_name);
+    if($connection->errno!=0)
+    {
+        echo json_encode(array('result'=>$connection->errno));
+        exit();
+    }
+    $connection->set_charset("utf8");
 
     try
     {
@@ -88,8 +89,7 @@
         $connection->rollback();  // transaction failed? rollback
         $connection->autocommit(true);
         $connection->close();
-        $error_msg = $e->getMessage();
-        $result = array("result"=>$error_msg);
+        $result = array("result"=>"ERROR: ".$e->getCode());
         echo json_encode($result);
         exit();
     }

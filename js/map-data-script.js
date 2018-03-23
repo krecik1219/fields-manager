@@ -1,16 +1,16 @@
-let map = null;
-let currentlySelectedMarkers = [];
-let polygons = [];
-let borderLine = null;
-let selectedPolygon = null;
-let infoWindows = [];
+var map = null;
+var currentlySelectedMarkers = [];
+var polygons = [];
+var borderLine = null;
+var selectedPolygon = null;
+var infoWindows = [];
 
-let mode_selector = $('#mode_selector').find('input[type=radio]');
+var mode_selector = $('#mode_selector').find('input[type=radio]');
 mode_selector.change(function() {
     mode = $('#mode_selector').find('input[type=radio]:checked').val();
     setUpModeFeatures();
 });
-let mode = mode_selector.filter(':checked').val();
+var mode = mode_selector.filter(':checked').val();
 //todo change create polygon behaviour to upload object to database
 function setUpModeFeatures()
 {
@@ -76,8 +76,8 @@ setUpModeFeatures();
 
 function removeFromArray(array, element)
 {
-    let indexOf = -1;
-    for(let i = 0; i<array.length && indexOf === -1; i++)
+    var indexOf = -1;
+    for(var i = 0; i<array.length && indexOf === -1; i++)
     {
         if(element === array[i])
             indexOf = i;
@@ -92,8 +92,8 @@ function drawBorderLine()
     {
         if(borderLine !== null)
             borderLine.setMap(null);
-        let coordinates = [];
-        for(let i = 0; i<currentlySelectedMarkers.length; i++)
+        var coordinates = [];
+        for(var i = 0; i<currentlySelectedMarkers.length; i++)
         {
             coordinates.push(currentlySelectedMarkers[i].getPosition());
         }
@@ -158,7 +158,7 @@ function resetCurrentlySelectedPolygon()
     if(selectedPolygon!==null)
         selectedPolygon.setOptions({fillColor: selectedPolygon.color['colorHexCode']});
     selectedPolygon = null;
-    for(let i =0; i<infoWindows.length; i++)
+    for(var i =0; i<infoWindows.length; i++)
     {
         infoWindows[i].close();
     }
@@ -176,7 +176,7 @@ function resetEditorsPanel()
 
 function setMarker(location)
 {
-    let marker = new google.maps.Marker(
+    var marker = new google.maps.Marker(
         {
             position: location,
             map: map
@@ -191,7 +191,7 @@ function removePolygon()
     console.log("polygons num before remove: "+polygons.length );
     if(selectedPolygon !== null && confirm("Jesteś pewny/a? Tej operacji nie można cofnąć!"))
     {
-        let idField = selectedPolygon.idField;
+        var idField = selectedPolygon.idField;
         $.ajax({
             url: 'remove-from-db.php',
             type: 'post',
@@ -215,44 +215,46 @@ function confirmChanges()
 {
     if(selectedPolygon!=null)
     {
-        let polygon = selectedPolygon;
-        let selectedCity = getCityFromEditorsPanel();
+        var polygon = selectedPolygon;
+        var selectedCity = getCityFromEditorsPanel();
         console.log("json City: "+JSON.stringify(selectedCity));
-        let area = getAreaFromEditorsPanel();
+        var area = getAreaFromEditorsPanel();
         console.log("area: "+area);
-        let providedDescr = getDescriptionFromEditorsPanel();
+        var providedDescr = getDescriptionFromEditorsPanel();
         console.log("descr: "+providedDescr);
-        let selectedColor = getColorFromEditorsPanel();
+        var selectedColor = getColorFromEditorsPanel();
         console.log("json color: "+JSON.stringify(selectedColor));
-        let selectedPlants = getPlantsFromEditorsPanel();
+        var selectedPlants = getPlantsFromEditorsPanel();
         console.log("json plants: "+JSON.stringify(selectedPlants));
-        let plants = [];
-        for(let i=0; i<selectedPlants.length; i++)
+        var plants = [];
+        for(var i=0; i<selectedPlants.length; i++)
         {
             plants.push(selectedPlants[i]['idPlant']);
         }
         if(plants.length === 0)
             plants = [''];
-        let path = polygon.getPath();
-        let coordinates = [];
-        for (let j = 0 ; j < path.length ; j++) {
-            coordinates.push({
-                lat: path.getAt(j).lat(),
-                lng: path.getAt(j).lng()
-            });
+        var polygonPlants = [];
+        for(var j=0; j<polygon.plants.length; j++)
+        {
+            console.log('polygon plant: '+j+" ; "+polygon.plants[j]['idPlant']);
+            polygonPlants.push(polygon.plants[j]['idPlant']);
         }
-        let plantsToAdd = polygon.plants.filter(x => !plants.includes(x));
+        var plantsToAdd = arraySubtraction(plants, polygonPlants);
         if(plantsToAdd.length === 0)
             plantsToAdd = [''];
-        let plantsToDelete = plants.filter(x => !polygon.plants.includes(x));
+        var plantsToDelete = arraySubtraction(polygonPlants, plants);
         if(plantsToDelete.length === 0)
             plantsToDelete = [''];
-        let dataToInsert={idPlace: selectedCity['idCity'], area: area, description: providedDescr, idColor: selectedColor['idColor'], plantsToAdd: plantsToAdd, plantsToDelete: plantsToDelete, coordinates:coordinates};
+        console.log("plants before: "+JSON.stringify(polygonPlants));
+        console.log("plants selected now: "+JSON.stringify(plants));
+        console.log("plants to add: "+JSON.stringify(plantsToAdd));
+        console.log("plants to delete: "+JSON.stringify(plantsToDelete));
+        var dataToUpdate={idField: polygon.idField, idPlace: selectedCity['idCity'], area: area, description: providedDescr, idColor: selectedColor['idColor'], plantsToAdd: plantsToAdd, plantsToDelete: plantsToDelete};
         $.ajax({
             url: 'update-in-db.php',  // todo implement updating in db
             type: 'post',
             dataType: 'json',
-            data: {myData: dataToInsert},
+            data: {myData: dataToUpdate},
             success: function(response){
                 if(response['error'] === 0)
                 {
@@ -265,10 +267,6 @@ function confirmChanges()
                     polygon.plants = selectedPlants;
                 }
                 alert(response['result']);
-            },
-            complete: function(){
-                borderLine.setMap(null);
-                borderLine = null;
             }
         });
 
@@ -283,7 +281,7 @@ function onPolygonClick(event, polygon)
     polygon.setOptions({fillColor:'#00ffff'});
     selectedPolygon = polygon;
     displayPolygonInfoInEditorsPanel(polygon);
-    let infoWindow = new google.maps.InfoWindow({
+    var infoWindow = new google.maps.InfoWindow({
         content: getContentForPolygon(polygon),
         position: event.latLng
     });
@@ -297,17 +295,17 @@ function onPolygonClick(event, polygon)
 
 function displayPolygonInfoInEditorsPanel(polygon)
 {
-    let idCity = polygon.city['idCity'];
-    let idColor = polygon.color['idColor'];
-    let area = polygon.fieldArea;
-    let descr = polygon.description;
-    let plantsIds = [];
-    for(let i=0; i<polygon.plants.length; i++)
+    var idCity = polygon.city['idCity'];
+    var idColor = polygon.color['idColor'];
+    var area = polygon.fieldArea;
+    var descr = polygon.description;
+    var plantsIds = [];
+    for(var i=0; i<polygon.plants.length; i++)
     {
         plantsIds.push(polygon.plants[i]['idPlant']);
     }
     $('#places').val(idCity);
-    let colorSelector = $('#colors');
+    var colorSelector = $('#colors');
     colorSelector.val(idColor);
     colorSelector.trigger('change');
     $('#area_field').val(area);
@@ -327,9 +325,9 @@ function onInfoWindowCloseClick(event, polygon, infoWindow)
 
 function getContentForPolygon(polygon)
 {
-    let polygonContentString = "Miasto: "+polygon.city['cityName']+"<br/>Pole powierzchni: "+polygon.fieldArea+"<br/>Posadzone rośliny: ";
-    let plants = "";
-    for(let i=0; i<polygon.plants.length; i++)
+    var polygonContentString = "Miasto: "+polygon.city['cityName']+"<br/>Pole powierzchni: "+polygon.fieldArea+"<br/>Posadzone rośliny: ";
+    var plants = "";
+    for(var i=0; i<polygon.plants.length; i++)
         plants+=(polygon.plants[i]['plantName']+", ");
     polygonContentString+=plants.substr(0, plants.length-2);
     polygonContentString+=("<br/>Opis: "+polygon.description);
@@ -343,8 +341,8 @@ function createPolygonFromMarkers()
         if(currentlySelectedMarkers.length > 2)
         {
             console.log('create polygon');
-            let coordinates = [];
-            for(let i = 0; i<currentlySelectedMarkers.length; i++)
+            var coordinates = [];
+            for(var i = 0; i<currentlySelectedMarkers.length; i++)
             {
                 console.log("single coor: "+currentlySelectedMarkers[i].getPosition());
                 console.log("x: "+currentlySelectedMarkers[i].getPosition().lat() + "; y: "+currentlySelectedMarkers[i].getPosition().lng());
@@ -352,7 +350,7 @@ function createPolygonFromMarkers()
             }
             console.log("coordinates: "+ coordinates.toString());
 
-            let polygon = new google.maps.Polygon({
+            var polygon = new google.maps.Polygon({
                 paths: coordinates,
                 strokeColor: '#ffffff',
                 strokeOpacity: 0.8,
@@ -376,7 +374,7 @@ function createPolygonFromMarkers()
             //borderLine.setMap(null);
             //borderLine = null;
 
-            for(let j = 0; j<currentlySelectedMarkers.length; j++)
+            for(var j = 0; j<currentlySelectedMarkers.length; j++)
                 currentlySelectedMarkers[j].setMap(null);
             currentlySelectedMarkers = [];
 
@@ -391,40 +389,40 @@ function createPolygonFromMarkers()
 
 function storeFieldData(polygon)
 {
-    let selectedCity = getCityFromEditorsPanel();
+    var selectedCity = getCityFromEditorsPanel();
     polygon.city = selectedCity;
     console.log("json City: "+JSON.stringify(selectedCity));
-    let area = getAreaFromEditorsPanel();
+    var area = getAreaFromEditorsPanel();
     polygon.fieldArea = area;
     console.log("area: "+area);
-    let providedDescr = getDescriptionFromEditorsPanel();
+    var providedDescr = getDescriptionFromEditorsPanel();
     polygon.description = providedDescr;
     console.log("descr: "+providedDescr);
-    let selectedColor = getColorFromEditorsPanel();
+    var selectedColor = getColorFromEditorsPanel();
     polygon.color = selectedColor;
     polygon.setOptions({fillColor: selectedColor['colorHexCode']});
     polygon.setOptions({strokeColor: selectedColor['colorHexCode']});
     console.log("json color: "+JSON.stringify(selectedColor));
-    let selectedPlants = getPlantsFromEditorsPanel();
+    var selectedPlants = getPlantsFromEditorsPanel();
     polygon.plants = selectedPlants;
     console.log("json plants: "+JSON.stringify(selectedPlants));
-    let plants = [];
-    for(let i=0; i<selectedPlants.length; i++)
+    var plants = [];
+    for(var i=0; i<selectedPlants.length; i++)
     {
         plants.push(selectedPlants[i]['idPlant']);
     }
     if(plants.length === 0)
         plants = [''];
-    let path = polygon.getPath();
-    let coordinates = [];
-    for (let j = 0 ; j < path.length ; j++) {
+    var path = polygon.getPath();
+    var coordinates = [];
+    for (var j = 0 ; j < path.length ; j++) {
         coordinates.push({
             lat: path.getAt(j).lat(),
             lng: path.getAt(j).lng()
         });
     }
     console.log("coordinates: "+JSON.stringify(coordinates));
-    let dataToInsert={idPlace: selectedCity['idCity'], area: area, description: providedDescr, idColor: selectedColor['idColor'], plants: plants, coordinates:coordinates};
+    var dataToInsert={idPlace: selectedCity['idCity'], area: area, description: providedDescr, idColor: selectedColor['idColor'], plants: plants, coordinates:coordinates};
     console.log("data to insert: "+JSON.stringify(dataToInsert));
     // database insertion
     $.ajax({
@@ -450,17 +448,17 @@ function storeFieldData(polygon)
 
 function getCityFromEditorsPanel()
 {
-    let placesSelector = $("#places");
-    let selectedCityId = placesSelector.val();
+    var placesSelector = $("#places");
+    var selectedCityId = placesSelector.val();
     if(selectedCityId === null)
         selectedCityId = 1;
-    let selectedCityName = placesSelector.find('option:selected').text();
+    var selectedCityName = placesSelector.find('option:selected').text();
     return {idCity: parseInt(selectedCityId), cityName: selectedCityName};
 }
 
 function getAreaFromEditorsPanel()
 {
-    let area = $("#area_field").val();
+    var area = $("#area_field").val();
     if(area === null)
         area = 0;
     return area;
@@ -468,17 +466,17 @@ function getAreaFromEditorsPanel()
 
 function getPlantsFromEditorsPanel()
 {
-    let plantsSelector = $('#plants');
-    let selectedPlantsIds = plantsSelector.val();
-    let selectedPlants = plantsSelector.find('option:selected');
-    let plants = [];
+    var plantsSelector = $('#plants');
+    var selectedPlantsIds = plantsSelector.val();
+    var selectedPlants = plantsSelector.find('option:selected');
+    var plants = [];
     if(selectedPlantsIds.length>0)
     {
-        let plantsNames = [];
+        var plantsNames = [];
         selectedPlants.each(function(index, value) {
             plantsNames.push($(value).text());
         });
-        for(let i=0; i<selectedPlantsIds.length; i++)
+        for(var i=0; i<selectedPlantsIds.length; i++)
         {
             plants.push({idPlant: selectedPlantsIds[i], plantName: plantsNames[i]});
         }
@@ -493,12 +491,12 @@ function getDescriptionFromEditorsPanel()
 
 function getColorFromEditorsPanel()
 {
-    let colorSelector = $("#colors");
-    let selectedColorId = colorSelector.val();
+    var colorSelector = $("#colors");
+    var selectedColorId = colorSelector.val();
     if(selectedColorId === null)
         selectedColorId = 1;
-    let selectedColor = colorSelector.find('option:selected');
-    let selectedColorHexCode = selectedColor.css('background-color');
+    var selectedColor = colorSelector.find('option:selected');
+    var selectedColorHexCode = selectedColor.css('background-color');
     if(selectedColor.length === 0)
         selectedColorHexCode = '#ffffff';
     console.log("Selected color: "+JSON.stringify(selectedColor));
@@ -510,13 +508,13 @@ function currentAreaFromMarkers()
 {
     if(currentlySelectedMarkers.length>2)
     {
-        let coordinates = [];
-        for(let i = 0; i<currentlySelectedMarkers.length; i++)
+        var coordinates = [];
+        for(var i = 0; i<currentlySelectedMarkers.length; i++)
         {
             coordinates.push(currentlySelectedMarkers[i].getPosition());
         }
         coordinates.push(currentlySelectedMarkers[0].getPosition());  // to close the shape
-        let squaredMeters =  google.maps.geometry.spherical.computeArea(coordinates);
+        var squaredMeters =  google.maps.geometry.spherical.computeArea(coordinates);
         return squaredMeters / 10000.0;
     }
     else
@@ -525,9 +523,9 @@ function currentAreaFromMarkers()
 
 function displayCurrentSelectedAreaVal()
 {
-    let area = currentAreaFromMarkers();
+    var area = currentAreaFromMarkers();
     console.log("area: "+area);
-    let formatted_area = area.toFixed(4);
+    var formatted_area = area.toFixed(4);
     $('#area_field').val(formatted_area);
 }
 
@@ -549,10 +547,10 @@ $(document).ready(function(){
 
 function loadPlaces(jsonResponse)
 {
-    let places = jsonResponse['places_array'];
-    let places_html = "";
-    let place=null;
-    for(let key in places)
+    var places = jsonResponse['places_array'];
+    var places_html = "";
+    var place=null;
+    for(var key in places)
     {
         place = places[key];
         places_html+="<option class = 'placesOption' value='"+key+"'>"+place['place_name']+"</option>";
@@ -562,10 +560,10 @@ function loadPlaces(jsonResponse)
 
 function loadPlants(jsonResponse)
 {
-    let plants = jsonResponse['plants_array'];
-    let plants_html = "";
-    let plant=null;
-    for(let key in plants)
+    var plants = jsonResponse['plants_array'];
+    var plants_html = "";
+    var plant=null;
+    for(var key in plants)
     {
         plant = plants[key];
         plants_html+="<option class = 'plantOption' value='"+key+"'>"+plant['plant_name']+"</option>";
@@ -575,10 +573,10 @@ function loadPlants(jsonResponse)
 
 function loadColors(jsonResponse)
 {
-    let colors = jsonResponse['colors_array'];
-    let colors_html = "";
-    let color = null;
-    for(let key in colors)
+    var colors = jsonResponse['colors_array'];
+    var colors_html = "";
+    var color = null;
+    for(var key in colors)
     {
         color = colors[key];
         colors_html+="<option value='"+key+"' style='background-color: "+color['color_hex_code']+";'></option>";
@@ -588,28 +586,28 @@ function loadColors(jsonResponse)
 
 function loadPolygons(jsonResponse)
 {
-    let fieldsArray = jsonResponse['fields_array'];
-    let coordinatesArray = jsonResponse['coor_array'];
-    let colorsArray = jsonResponse['colors_array'];
-    let placesArray = jsonResponse['places_array'];
-    let plantsArray = jsonResponse['plants_array'];
-    let plantedArray = jsonResponse['planted_array']
+    var fieldsArray = jsonResponse['fields_array'];
+    var coordinatesArray = jsonResponse['coor_array'];
+    var colorsArray = jsonResponse['colors_array'];
+    var placesArray = jsonResponse['places_array'];
+    var plantsArray = jsonResponse['plants_array'];
+    var plantedArray = jsonResponse['planted_array']
 
-    for(let i =0; i<fieldsArray.length; i++)
+    for(var i =0; i<fieldsArray.length; i++)
     {
-        let coordinates = [];
-        for(let j=0; j<coordinatesArray[fieldsArray[i]['id_field']].length; j++)
+        var coordinates = [];
+        for(var j=0; j<coordinatesArray[fieldsArray[i]['id_field']].length; j++)
         {
-            let singleCoord = coordinatesArray[fieldsArray[i]['id_field']][j];
+            var singleCoord = coordinatesArray[fieldsArray[i]['id_field']][j];
             coordinates.push({lat: parseFloat(singleCoord['lat']), lng: parseFloat(singleCoord['lng'])});
         }
-        let planted = [];
-        for(let j =0; j<plantedArray[fieldsArray[i]['id_field']].length; j++)
+        var planted = [];
+        for(var j =0; j<plantedArray[fieldsArray[i]['id_field']].length; j++)
         {
             planted.push({idPlant: plantedArray[fieldsArray[i]['id_field']][j], plantName: plantsArray[plantedArray[fieldsArray[i]['id_field']][j]]['plant_name']});
         }
 
-        let polygon = new google.maps.Polygon({
+        var polygon = new google.maps.Polygon({
             paths: coordinates,
             strokeColor: colorsArray[fieldsArray[i]['id_color']]['color_hex_code'],
             strokeOpacity: 0.8,
@@ -649,4 +647,9 @@ function rgb2hex(rgb) {
         }
         return "#" + hex(rgb[1]) + hex(rgb[2]) + hex(rgb[3]);
     }
+}
+
+function arraySubtraction (a1, a2)
+{
+    return $(a1).not(a2).get();
 }
