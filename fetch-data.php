@@ -72,7 +72,7 @@
         echo '<span style = "color:red">Błąd serwera!</span>';
         exit();
     }
-    $sql_query = "SELECT id_field, id_place, area, id_color, description FROM fields WHERE id_user = '$id_user'";
+    $sql_query = "SELECT id_field, id_place, area, id_color, owner, description FROM fields WHERE id_user = '$id_user'";
     // fetch data about all available
     $fields_array = array();
     if($result = $connection->query($sql_query))
@@ -83,8 +83,9 @@
             $id_place = $row['id_place'];
             $area = $row['area'];
             $id_color = $row['id_color'];
+            $owner = $row['owner'];
             $description = $row['description'];
-            $fields_array[] = array("id_field"=>$id_field, "id_place"=>$id_place, "area"=>$area, "id_color"=>$id_color, "description"=>$description);
+            $fields_array[] = array("id_field"=>$id_field, "id_place"=>$id_place, "area"=>$area, "id_color"=>$id_color, "owner"=>$owner, "description"=>$description);
         }
         $result->free_result();
     }

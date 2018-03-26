@@ -32,6 +32,8 @@
                 </form>
                 <div id="editor" style="margin-top: 40px;">
                     <form id="editingForm" method="post">
+                        Właściciel <br/>
+                        <textarea id="owner" name="owner" rows="1" cols = "30"></textarea> <br/>
                         Najbliższa miejscowość <br/>
                         <select id = "places" name = "places">
                         </select> <br/>

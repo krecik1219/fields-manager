@@ -18,6 +18,7 @@
     $area = htmlentities($my_data['area'], ENT_QUOTES, "UTF-8");
     $description = htmlentities($my_data['description'], ENT_QUOTES, "UTF-8");
     $id_color = htmlentities($my_data['idColor'], ENT_QUOTES, "UTF-8");
+    $owner = htmlentities($my_data['owner'], ENT_QUOTES, "UTF-8");
     $plants = $my_data['plants'];
     if($plants[0]=="")
         $plants=array();
@@ -37,11 +38,11 @@
         // begin transaction
         $connection->autocommit(false);
 
-        $sql_query = "INSERT INTO fields VALUES(NULL, ?, ?, ?, ?, ?)";
+        $sql_query = "INSERT INTO fields VALUES(NULL, ?, ?, ?, ?, ?, ?)";
         $stmt = $connection->prepare($sql_query);
         if(!$stmt)
             throw new Exception("insert field error");
-        $stmt->bind_param("iidis", $id_user, $id_place, $area, $id_color, $description);
+        $stmt->bind_param("iidiss", $id_user, $id_place, $area, $id_color, $owner, $description);
         if(!$stmt->execute())
             throw new Exception("insert field query execute error: ".$stmt->errno);
         $id_field = $connection->insert_id;

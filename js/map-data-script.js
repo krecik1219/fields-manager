@@ -11,7 +11,7 @@ mode_selector.change(function() {
     setUpModeFeatures();
 });
 var mode = mode_selector.filter(':checked').val();
-//todo change create polygon behaviour to upload object to database
+
 function setUpModeFeatures()
 {
     switch(mode)
@@ -30,6 +30,7 @@ function setUpModeFeatures()
 
 function setUpExploreModeFeatures()
 {
+    $('#owner').prop('disabled', true);
     $('#places').prop('disabled', true);
     $('#area_field').prop('disabled', true);
     $('#plants').prop('disabled', true);
@@ -39,6 +40,7 @@ function setUpExploreModeFeatures()
 
 function setUpCreateModeFeatures()
 {
+    $('#owner').prop('disabled', false);
     $('#places').prop('disabled', false);
     $('#area_field').prop('disabled', false);
     $('#plants').prop('disabled', false);
@@ -48,6 +50,7 @@ function setUpCreateModeFeatures()
 
 function setUpEditModeFeatures()
 {
+    $('#owner').prop('disabled', false);
     $('#places').prop('disabled', false);
     $('#area_field').prop('disabled', false);
     $('#plants').prop('disabled', false);
@@ -167,6 +170,7 @@ function resetCurrentlySelectedPolygon()
 
 function resetEditorsPanel()
 {
+    $('#owner').val(null);
     $('#places').val(null);
     $('#plants').val(null);
     $('#colors').val(null);
@@ -187,7 +191,6 @@ function setMarker(location)
 
 function removePolygon()
 {
-    //todo database removal
     console.log("polygons num before remove: "+polygons.length );
     if(selectedPolygon !== null && confirm("Jesteś pewny/a? Tej operacji nie można cofnąć!"))
     {
@@ -216,6 +219,8 @@ function confirmChanges()
     if(selectedPolygon!=null)
     {
         var polygon = selectedPolygon;
+        var providedOwner = getOwnerFromEditorsPanel();
+        console.log("owner: "+providedOwner);
         var selectedCity = getCityFromEditorsPanel();
         console.log("json City: "+JSON.stringify(selectedCity));
         var area = getAreaFromEditorsPanel();
@@ -249,15 +254,16 @@ function confirmChanges()
         console.log("plants selected now: "+JSON.stringify(plants));
         console.log("plants to add: "+JSON.stringify(plantsToAdd));
         console.log("plants to delete: "+JSON.stringify(plantsToDelete));
-        var dataToUpdate={idField: polygon.idField, idPlace: selectedCity['idCity'], area: area, description: providedDescr, idColor: selectedColor['idColor'], plantsToAdd: plantsToAdd, plantsToDelete: plantsToDelete};
+        var dataToUpdate={idField: polygon.idField, idPlace: selectedCity['idCity'], area: area, description: providedDescr, idColor: selectedColor['idColor'], plantsToAdd: plantsToAdd, plantsToDelete: plantsToDelete, owner: providedOwner};
         $.ajax({
-            url: 'update-in-db.php',  // todo implement updating in db
+            url: 'update-in-db.php',
             type: 'post',
             dataType: 'json',
             data: {myData: dataToUpdate},
             success: function(response){
                 if(response['error'] === 0)
                 {
+                    polygon.owner = providedOwner;
                     polygon.city = selectedCity;
                     polygon.fieldArea = area;
                     polygon.description = providedDescr;
@@ -299,6 +305,7 @@ function displayPolygonInfoInEditorsPanel(polygon)
     var idColor = polygon.color['idColor'];
     var area = polygon.fieldArea;
     var descr = polygon.description;
+    var owner = polygon.owner;
     var plantsIds = [];
     for(var i=0; i<polygon.plants.length; i++)
     {
@@ -310,6 +317,7 @@ function displayPolygonInfoInEditorsPanel(polygon)
     colorSelector.trigger('change');
     $('#area_field').val(area);
     $('#descr').val(descr);
+    $('#owner').val(owner);
     $('#plants').val(plantsIds);
 }
 
@@ -325,7 +333,7 @@ function onInfoWindowCloseClick(event, polygon, infoWindow)
 
 function getContentForPolygon(polygon)
 {
-    var polygonContentString = "Miasto: "+polygon.city['cityName']+"<br/>Pole powierzchni: "+polygon.fieldArea+"<br/>Posadzone rośliny: ";
+    var polygonContentString = "Właściciel: "+polygon.owner+"<br/>Miasto: "+polygon.city['cityName']+"<br/>Pole powierzchni: "+polygon.fieldArea+"<br/>Posadzone rośliny: ";
     var plants = "";
     for(var i=0; i<polygon.plants.length; i++)
         plants+=(polygon.plants[i]['plantName']+", ");
@@ -364,7 +372,8 @@ function createPolygonFromMarkers()
                 city: {idCity:null, cityName: ''},
                 plants: [],
                 fieldArea: 0,
-                description: ''
+                description: '',
+                owner: ''
             });
 
             google.maps.event.addListener(polygon, 'click', function(event){
@@ -389,6 +398,9 @@ function createPolygonFromMarkers()
 
 function storeFieldData(polygon)
 {
+    var fieldOwner = getOwnerFromEditorsPanel();
+    polygon.owner = fieldOwner;
+    console.log("owner: "+fieldOwner);
     var selectedCity = getCityFromEditorsPanel();
     polygon.city = selectedCity;
     console.log("json City: "+JSON.stringify(selectedCity));
@@ -422,7 +434,7 @@ function storeFieldData(polygon)
         });
     }
     console.log("coordinates: "+JSON.stringify(coordinates));
-    var dataToInsert={idPlace: selectedCity['idCity'], area: area, description: providedDescr, idColor: selectedColor['idColor'], plants: plants, coordinates:coordinates};
+    var dataToInsert={idPlace: selectedCity['idCity'], area: area, description: providedDescr, idColor: selectedColor['idColor'], plants: plants, coordinates:coordinates, owner: fieldOwner};
     console.log("data to insert: "+JSON.stringify(dataToInsert));
     // database insertion
     $.ajax({
@@ -487,6 +499,11 @@ function getPlantsFromEditorsPanel()
 function getDescriptionFromEditorsPanel()
 {
     return $('#descr').val();
+}
+
+function getOwnerFromEditorsPanel()
+{
+    return $('#owner').val();
 }
 
 function getColorFromEditorsPanel()
@@ -621,7 +638,8 @@ function loadPolygons(jsonResponse)
             city: {idCity: fieldsArray[i]['id_place'], cityName: placesArray[fieldsArray[i]['id_place']]['place_name']},
             plants: planted,
             fieldArea: fieldsArray[i]['area'],
-            description: fieldsArray[i]['description']
+            description: fieldsArray[i]['description'],
+            owner: fieldsArray[i]['owner']
         });
 
         console.log("fields ids: "+polygon.idField);
