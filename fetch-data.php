@@ -34,7 +34,7 @@
         echo '<span style = "color:red">Błąd serwera!</span>';
         exit();
     }
-    $sql_query = "SELECT id_plant, plant_name FROM plants ORDER BY plant_name ASC";
+    $sql_query = "SELECT id_plant, plant_name, id_color FROM plants ORDER BY plant_name ASC";
     // fetch data about all available plants
     $plants_array = array();
     if($result = $connection->query($sql_query))
@@ -43,7 +43,8 @@
         {
             $id_plant = $row['id_plant'];
             $plant_name = $row['plant_name'];
-            $plants_array[$id_plant] = array("plant_name"=>$plant_name);
+            $id_color = $row['id_color'];
+            $plants_array[$id_plant] = array("plant_name"=>$plant_name, "id_color"=>$id_color);
         }
         $result->free_result();
     }
@@ -72,7 +73,29 @@
         echo '<span style = "color:red">Błąd serwera!</span>';
         exit();
     }
-    $sql_query = "SELECT id_field, id_place, area, id_color, owner, description FROM fields WHERE id_user = '$id_user'";
+    $sql_query = "SELECT id_owner, name, surname, id_color FROM owners WHERE id_user = '$id_user'";
+    // fetch data about fields owners
+    $owners_array = array();
+    if($result = $connection->query($sql_query))
+    {
+        while($row = $result->fetch_assoc())
+        {
+            $id_owner = $row['id_owner'];
+            $name = $row['name'];
+            $surname = $row['surname'];
+            $id_color = $row['id_color'];
+            $owners_array[$id_owner] = array("name"=>$name, "surname"=>$surname, "id_color"=>$id_color);
+        }
+        $result->free_result();
+    }
+    else
+    {
+        $connection->close();
+        echo '<span style = "color:red">Błąd serwera!</span>';
+        exit();
+    }
+
+    $sql_query = "SELECT id_field, id_place, area, id_owner, description FROM fields WHERE id_user = '$id_user'";
     // fetch data about all available
     $fields_array = array();
     if($result = $connection->query($sql_query))
@@ -82,10 +105,9 @@
             $id_field = $row['id_field'];
             $id_place = $row['id_place'];
             $area = $row['area'];
-            $id_color = $row['id_color'];
-            $owner = $row['owner'];
+            $id_owner = $row['id_owner'];
             $description = $row['description'];
-            $fields_array[] = array("id_field"=>$id_field, "id_place"=>$id_place, "area"=>$area, "id_color"=>$id_color, "owner"=>$owner, "description"=>$description);
+            $fields_array[] = array("id_field"=>$id_field, "id_place"=>$id_place, "area"=>$area, "id_color"=>$id_color, "id_owner"=>$id_owner, "description"=>$description);
         }
         $result->free_result();
     }
@@ -142,12 +164,13 @@
     $connection->close();
 
     $result_data = array();
-    $result_data['places_array']=$places_array;
-    $result_data['plants_array']=$plants_array;
-    $result_data['colors_array']=$colors_array;
-    $result_data['fields_array']=$fields_array;
-    $result_data['coor_array']=$coor_array;
-    $result_data['planted_array']=$planted_array;
+    $result_data['places_array'] = $places_array;
+    $result_data['plants_array'] = $plants_array;
+    $result_data['colors_array'] = $colors_array;
+    $result_data['fields_array'] = $fields_array;
+    $result_data['coor_array'] = $coor_array;
+    $result_data['planted_array'] = $planted_array;
+    $result_data['owners_array'] = $owners_array;
 
     // return json data
     echo json_encode($result_data);

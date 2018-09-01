@@ -1,16 +1,39 @@
 var map = null;
 var currentlySelectedMarkers = [];
 var polygons = [];
+var plantsDataDict = {};
+var ownersDataDict = {};
 var borderLine = null;
 var selectedPolygon = null;
 var infoWindows = [];
 
 var mode_selector = $('#mode_selector').find('input[type=radio]');
+var mode = mode_selector.filter(':checked').val();
 mode_selector.change(function() {
     mode = $('#mode_selector').find('input[type=radio]:checked').val();
     setUpModeFeatures();
 });
-var mode = mode_selector.filter(':checked').val();
+
+var fields_coloring_selector = $('#fields_coloring_selector').find('input[type=radio]');
+var displayColoring = fields_coloring_selector.filter(':checked').val();
+fields_coloring_selector.change(function() {
+    displayColoring = $('#fields_coloring_selector').find('input[type=radio]:checked').val();
+    changePolygonsColors();
+});
+
+function changePolygonsColors()
+{
+    for(var i = 0; i < polygons.length; i++)
+    {
+        var polygon = polygons[i];
+        if(displayColoring === 'owner_coloring')
+            polygon.color = {idColor: polygon.ownerColor['idColor'], colorHexCode: polygon.ownerColor['colorHexCode']};
+        else  // plant_coloring
+            polygon.color = {idColor: polygon.plantColor['idColor'], colorHexCode: polygon.plantColor['colorHexCode']};
+        polygon.setOptions({fillColor: polygon.color['colorHexCode']});
+        polygon.setOptions({strokeColor: polygon.color['colorHexCode']});
+    }
+}
 
 function setUpModeFeatures()
 {
@@ -30,32 +53,32 @@ function setUpModeFeatures()
 
 function setUpExploreModeFeatures()
 {
-    $('#owner').prop('disabled', true);
+    $('#owners').prop('disabled', true);
     $('#places').prop('disabled', true);
     $('#area_field').prop('disabled', true);
     $('#plants').prop('disabled', true);
     $('#descr').prop('disabled', true);
-    $('#colors').prop('disabled', true);
+    //$('#colors').prop('disabled', true);
 }
 
 function setUpCreateModeFeatures()
 {
-    $('#owner').prop('disabled', false);
+    $('#owners').prop('disabled', false);
     $('#places').prop('disabled', false);
     $('#area_field').prop('disabled', false);
     $('#plants').prop('disabled', false);
     $('#descr').prop('disabled', false);
-    $('#colors').prop('disabled', false);
+    //$('#colors').prop('disabled', false);
 }
 
 function setUpEditModeFeatures()
 {
-    $('#owner').prop('disabled', false);
+    $('#owners').prop('disabled', false);
     $('#places').prop('disabled', false);
     $('#area_field').prop('disabled', false);
     $('#plants').prop('disabled', false);
     $('#descr').prop('disabled', false);
-    $('#colors').prop('disabled', false);
+    //$('#colors').prop('disabled', false);
 }
 
 setUpModeFeatures();
@@ -170,10 +193,10 @@ function resetCurrentlySelectedPolygon()
 
 function resetEditorsPanel()
 {
-    $('#owner').val(null);
+    $('#owners').val(null);
     $('#places').val(null);
     $('#plants').val(null);
-    $('#colors').val(null);
+    //$('#colors').val(null);
     $('#descr').val(null);
     $('#area_field').val(null);
 }
@@ -221,16 +244,27 @@ function confirmChanges()
         var polygon = selectedPolygon;
         var providedOwner = getOwnerFromEditorsPanel();
         console.log("owner: "+providedOwner);
+        if(providedOwner != null)
+        {
+            if(displayColoring === 'owner_coloring')
+                polygon.color = {idColor: ownersDataDict[providedOwner]['idColor'], colorHexCode: ownersDataDict[providedOwner]['colorHexCode']};
+            polygon.ownerColor = {idColor: ownersDataDict[providedOwner]['idColor'], colorHexCode: ownersDataDict[providedOwner]['colorHexCode']};
+        }
         var selectedCity = getCityFromEditorsPanel();
         console.log("json City: "+JSON.stringify(selectedCity));
         var area = getAreaFromEditorsPanel();
         console.log("area: "+area);
         var providedDescr = getDescriptionFromEditorsPanel();
         console.log("descr: "+providedDescr);
-        var selectedColor = getColorFromEditorsPanel();
-        console.log("json color: "+JSON.stringify(selectedColor));
         var selectedPlants = getPlantsFromEditorsPanel();
         console.log("json plants: "+JSON.stringify(selectedPlants));
+        if(selectedPlants.length > 0)
+        {
+            var plantId = selectedPlants[0]['idPlant'];
+            if(displayColoring === 'plant_coloring')
+                polygon.color = {idColor: plantsDataDict[plantId]['idColor'], colorHexCode: plantsDataDict[plantId]['colorHexCode']};
+            polygon.plantColor = {idColor: plantsDataDict[plantId]['idColor'], colorHexCode: plantsDataDict[plantId]['colorHexCode']};
+        }
         var plants = [];
         for(var i=0; i<selectedPlants.length; i++)
         {
@@ -254,7 +288,11 @@ function confirmChanges()
         console.log("plants selected now: "+JSON.stringify(plants));
         console.log("plants to add: "+JSON.stringify(plantsToAdd));
         console.log("plants to delete: "+JSON.stringify(plantsToDelete));
-        var dataToUpdate={idField: polygon.idField, idPlace: selectedCity['idCity'], area: area, description: providedDescr, idColor: selectedColor['idColor'], plantsToAdd: plantsToAdd, plantsToDelete: plantsToDelete, owner: providedOwner};
+        var ownerIdToSend = providedOwner;
+        if(ownerIdToSend == null)
+            ownerIdToSend = '';
+        var dataToUpdate={idField: polygon.idField, idPlace: selectedCity['idCity'], area: area, description: providedDescr, plantsToAdd: plantsToAdd, plantsToDelete: plantsToDelete, idOwner: ownerIdToSend};
+        console.log("data to udpate: "+JSON.stringify(dataToUpdate));
         $.ajax({
             url: 'update-in-db.php',
             type: 'post',
@@ -267,9 +305,8 @@ function confirmChanges()
                     polygon.city = selectedCity;
                     polygon.fieldArea = area;
                     polygon.description = providedDescr;
-                    polygon.color = selectedColor;
-                    polygon.setOptions({fillColor: selectedColor['colorHexCode']});
-                    polygon.setOptions({strokeColor: selectedColor['colorHexCode']});
+                    polygon.setOptions({fillColor: polygon.color['colorHexCode']});
+                    polygon.setOptions({strokeColor: polygon.color['colorHexCode']});
                     polygon.plants = selectedPlants;
                 }
                 alert(response['result']);
@@ -302,7 +339,6 @@ function onPolygonClick(event, polygon)
 function displayPolygonInfoInEditorsPanel(polygon)
 {
     var idCity = polygon.city['idCity'];
-    var idColor = polygon.color['idColor'];
     var area = polygon.fieldArea;
     var descr = polygon.description;
     var owner = polygon.owner;
@@ -312,12 +348,9 @@ function displayPolygonInfoInEditorsPanel(polygon)
         plantsIds.push(polygon.plants[i]['idPlant']);
     }
     $('#places').val(idCity);
-    var colorSelector = $('#colors');
-    colorSelector.val(idColor);
-    colorSelector.trigger('change');
     $('#area_field').val(area);
     $('#descr').val(descr);
-    $('#owner').val(owner);
+    $('#owners').val(owner);
     $('#plants').val(plantsIds);
 }
 
@@ -333,7 +366,14 @@ function onInfoWindowCloseClick(event, polygon, infoWindow)
 
 function getContentForPolygon(polygon)
 {
-    var polygonContentString = "Właściciel: "+polygon.owner+"<br/>Miasto: "+polygon.city['cityName']+"<br/>Pole powierzchni: "+polygon.fieldArea+"<br/>Posadzone rośliny: ";
+    var ownerName = '';
+    var ownerSurname = '';
+    if(polygon.owner != null)
+    {
+        ownerName = ownersDataDict[polygon.owner]['name'];
+        ownerSurname = ownersDataDict[polygon.owner]['surname'];
+    }
+    var polygonContentString = "Właściciel: "+ownerName+" "+ownerSurname+"<br/>Miasto: "+polygon.city['cityName']+"<br/>Pole powierzchni: "+polygon.fieldArea+"<br/>Posadzone rośliny: ";
     var plants = "";
     for(var i=0; i<polygon.plants.length; i++)
         plants+=(polygon.plants[i]['plantName']+", ");
@@ -368,12 +408,14 @@ function createPolygonFromMarkers()
                 editable: false,
                 map: null,
                 idField: null,
+                ownerColor: {idColor:null, colorHexCode: '#ffffff'},
+                plantColor: {idColor:null, colorHexCode: '#ffffff'},
                 color: {idColor:null, colorHexCode: '#ffffff'},
                 city: {idCity:null, cityName: ''},
                 plants: [],
                 fieldArea: 0,
                 description: '',
-                owner: ''
+                owner: null
             });
 
             google.maps.event.addListener(polygon, 'click', function(event){
@@ -410,14 +452,24 @@ function storeFieldData(polygon)
     var providedDescr = getDescriptionFromEditorsPanel();
     polygon.description = providedDescr;
     console.log("descr: "+providedDescr);
-    var selectedColor = getColorFromEditorsPanel();
-    polygon.color = selectedColor;
-    polygon.setOptions({fillColor: selectedColor['colorHexCode']});
-    polygon.setOptions({strokeColor: selectedColor['colorHexCode']});
-    console.log("json color: "+JSON.stringify(selectedColor));
+    if(fieldOwner != null)
+    {
+        if(displayColoring === 'owner_coloring')
+            polygon.color = {idColor: ownersDataDict[fieldOwner]['idColor'], colorHexCode: ownersDataDict[fieldOwner]['colorHexCode']};
+        polygon.ownerColor = {idColor: ownersDataDict[fieldOwner]['idColor'], colorHexCode: ownersDataDict[fieldOwner]['colorHexCode']};
+    }
     var selectedPlants = getPlantsFromEditorsPanel();
     polygon.plants = selectedPlants;
     console.log("json plants: "+JSON.stringify(selectedPlants));
+    if(polygon.plants.length > 0)
+    {
+        var plantId = polygon.plants[0]['idPlant'];
+        if(displayColoring === 'plant_coloring')
+            polygon.color = {idColor: plantsDataDict[plantId]['idColor'], colorHexCode: plantsDataDict[plantId]['colorHexCode']};
+        polygon.plantColor = {idColor: plantsDataDict[plantId]['idColor'], colorHexCode: plantsDataDict[plantId]['colorHexCode']};
+    }
+    polygon.setOptions({fillColor: polygon.color['colorHexCode']});
+    polygon.setOptions({strokeColor: polygon.color['colorHexCode']});
     var plants = [];
     for(var i=0; i<selectedPlants.length; i++)
     {
@@ -434,7 +486,10 @@ function storeFieldData(polygon)
         });
     }
     console.log("coordinates: "+JSON.stringify(coordinates));
-    var dataToInsert={idPlace: selectedCity['idCity'], area: area, description: providedDescr, idColor: selectedColor['idColor'], plants: plants, coordinates:coordinates, owner: fieldOwner};
+    console.log('fieldowner: '+fieldOwner);
+    if(fieldOwner == null)
+        fieldOwner = '';
+    var dataToInsert={idPlace: selectedCity['idCity'], area: area, description: providedDescr, plants: plants, coordinates:coordinates, idOwner: fieldOwner};
     console.log("data to insert: "+JSON.stringify(dataToInsert));
     // database insertion
     $.ajax({
@@ -475,23 +530,36 @@ function getAreaFromEditorsPanel()
         area = 0;
     return area;
 }
+// old vesrion for multi selector
+// function getPlantsFromEditorsPanel()
+// {
+//     var plantsSelector = $('#plants');
+//     var selectedPlantsIds = plantsSelector.val();
+//     var selectedPlants = plantsSelector.find('option:selected');
+//     var plants = [];
+//     if(selectedPlantsIds != null && selectedPlantsIds.length>0)
+//     {
+//         var plantsNames = [];
+//         selectedPlants.each(function(index, value) {
+//             plantsNames.push($(value).text());
+//         });
+//         for(var i=0; i<selectedPlantsIds.length; i++)
+//         {
+//             plants.push({idPlant: selectedPlantsIds[i], plantName: plantsNames[i]});
+//         }
+//     }
+//     return plants;
+// }
 
 function getPlantsFromEditorsPanel()
 {
     var plantsSelector = $('#plants');
-    var selectedPlantsIds = plantsSelector.val();
-    var selectedPlants = plantsSelector.find('option:selected');
+    var selectedPlantId = plantsSelector.val();
     var plants = [];
-    if(selectedPlantsIds.length>0)
+    if(selectedPlantId != null)
     {
-        var plantsNames = [];
-        selectedPlants.each(function(index, value) {
-            plantsNames.push($(value).text());
-        });
-        for(var i=0; i<selectedPlantsIds.length; i++)
-        {
-            plants.push({idPlant: selectedPlantsIds[i], plantName: plantsNames[i]});
-        }
+        var plantName = plantsDataDict[selectedPlantId]['plantName'];
+        plants.push({idPlant: selectedPlantId, plantName: plantName});
     }
     return plants;
 }
@@ -503,23 +571,23 @@ function getDescriptionFromEditorsPanel()
 
 function getOwnerFromEditorsPanel()
 {
-    return $('#owner').val();
+    return $('#owners').val();
 }
 
-function getColorFromEditorsPanel()
-{
-    var colorSelector = $("#colors");
-    var selectedColorId = colorSelector.val();
-    if(selectedColorId === null)
-        selectedColorId = 1;
-    var selectedColor = colorSelector.find('option:selected');
-    var selectedColorHexCode = selectedColor.css('background-color');
-    if(selectedColor.length === 0)
-        selectedColorHexCode = '#ffffff';
-    console.log("Selected color: "+JSON.stringify(selectedColor));
-    console.log("selected colorHexCode: "+selectedColorHexCode);
-    return {idColor: parseInt(selectedColorId), colorHexCode: rgb2hex(selectedColorHexCode)};
-}
+// function getColorFromEditorsPanel()
+// {
+//     var colorSelector = $("#colors");
+//     var selectedColorId = colorSelector.val();
+//     if(selectedColorId === null)
+//         selectedColorId = 1;
+//     var selectedColor = colorSelector.find('option:selected');
+//     var selectedColorHexCode = selectedColor.css('background-color');
+//     if(selectedColor.length === 0)
+//         selectedColorHexCode = '#ffffff';
+//     console.log("Selected color: "+JSON.stringify(selectedColor));
+//     console.log("selected colorHexCode: "+selectedColorHexCode);
+//     return {idColor: parseInt(selectedColorId), colorHexCode: rgb2hex(selectedColorHexCode)};
+// }
 
 function currentAreaFromMarkers()
 {
@@ -555,7 +623,8 @@ $(document).ready(function(){
         success: function(response){
             loadPlaces(response);
             loadPlants(response);
-            loadColors(response);
+            //loadColors(response);
+            loadOwners(response);
             loadPolygons(response);
             resetEditorsPanel();
         }
@@ -566,7 +635,7 @@ function loadPlaces(jsonResponse)
 {
     var places = jsonResponse['places_array'];
     var places_html = "";
-    var place=null;
+    var place = null;
     for(var key in places)
     {
         place = places[key];
@@ -575,31 +644,54 @@ function loadPlaces(jsonResponse)
     $('#places').html(places_html);
 }
 
+function loadOwners(jsonResponse)
+{
+    var owners = jsonResponse['owners_array'];
+    var colors = jsonResponse['colors_array'];
+    var owners_html = "";
+    var owner = null;
+    var colorHexCode = null;
+    for(var key in owners)
+    {
+        owner = owners[key];
+        var idColor = owner['id_color'];
+        colorHexCode = colors[idColor]['color_hex_code'];
+        ownersDataDict[key] = {idOwner: key, name: owner['name'], surname: owner['surname'], idColor: idColor, colorHexCode: colorHexCode};
+        owners_html += "<option class = 'ownersOption' value='"+key+"' style='background-color: "+colorHexCode+"; color: "+invertColor(colorHexCode)+"; padding: 8px; font-size: 18px;'>"+owner['name']+" "+owner['surname']+"</option>";
+    }
+    $('#owners').html(owners_html);
+}
+
 function loadPlants(jsonResponse)
 {
     var plants = jsonResponse['plants_array'];
+    var colors = jsonResponse['colors_array'];
     var plants_html = "";
-    var plant=null;
+    var plant = null;
+    var colorHexCode = null;
     for(var key in plants)
     {
         plant = plants[key];
-        plants_html+="<option class = 'plantOption' value='"+key+"'>"+plant['plant_name']+"</option>";
+        var idColor = plant['id_color'];
+        colorHexCode = colors[idColor]['color_hex_code'];
+        plantsDataDict[key] = {idPlant: key, plantName: plant['plant_name'], idColor: idColor, colorHexCode: colorHexCode};
+        plants_html+="<option class = 'plantOption' value='"+key+"' style='background-color: "+colorHexCode+"; color: "+invertColor(colorHexCode)+"; padding: 8px; font-size: 18px;'>"+plant['plant_name']+"</option>";
     }
     $('#plants').html(plants_html);
 }
 
-function loadColors(jsonResponse)
-{
-    var colors = jsonResponse['colors_array'];
-    var colors_html = "";
-    var color = null;
-    for(var key in colors)
-    {
-        color = colors[key];
-        colors_html+="<option value='"+key+"' style='background-color: "+color['color_hex_code']+";'></option>";
-    }
-    $('#colors').html(colors_html);
-}
+// function loadColors(jsonResponse)
+// {
+//     var colors = jsonResponse['colors_array'];
+//     var colors_html = "";
+//     var color = null;
+//     for(var key in colors)
+//     {
+//         color = colors[key];
+//         colors_html+="<option value='"+key+"' style='background-color: "+color['color_hex_code']+";'></option>";
+//     }
+//     $('#colors').html(colors_html);
+// }
 
 function loadPolygons(jsonResponse)
 {
@@ -608,7 +700,8 @@ function loadPolygons(jsonResponse)
     var colorsArray = jsonResponse['colors_array'];
     var placesArray = jsonResponse['places_array'];
     var plantsArray = jsonResponse['plants_array'];
-    var plantedArray = jsonResponse['planted_array']
+    var plantedArray = jsonResponse['planted_array'];
+    var ownersArray = jsonResponse['owners_array'];
 
     for(var i =0; i<fieldsArray.length; i++)
     {
@@ -621,28 +714,45 @@ function loadPolygons(jsonResponse)
         var planted = [];
         for(var j =0; j<plantedArray[fieldsArray[i]['id_field']].length; j++)
         {
-            planted.push({idPlant: plantedArray[fieldsArray[i]['id_field']][j], plantName: plantsArray[plantedArray[fieldsArray[i]['id_field']][j]]['plant_name']});
+            planted.push({idPlant: plantedArray[fieldsArray[i]['id_field']][j], plantName: plantsArray[plantedArray[fieldsArray[i]['id_field']][j]]['plant_name'], idColor: plantsArray[plantedArray[fieldsArray[i]['id_field']][j]]['id_color']});
+        }
+        var idOwner = fieldsArray[i]['id_owner'];
+        var ownerColorId = null;
+        var ownerColorHexCode = '#ffffff';
+        if(idOwner != null)
+        {
+            var owner = ownersArray[idOwner];
+            ownerColorId = owner['id_color'];
+            ownerColorHexCode = colorsArray[ownerColorId]['color_hex_code'];
         }
 
         var polygon = new google.maps.Polygon({
             paths: coordinates,
-            strokeColor: colorsArray[fieldsArray[i]['id_color']]['color_hex_code'],
+            strokeColor: ownerColorHexCode,
             strokeOpacity: 0.8,
             strokeWeight: 2,
-            fillColor: colorsArray[fieldsArray[i]['id_color']]['color_hex_code'],
+            fillColor: ownerColorHexCode,
             fillOpacity: 0.35,
             editable: false,
             map: map,
             idField: fieldsArray[i]['id_field'],
-            color: {idColor: fieldsArray[i]['id_color'], colorHexCode: colorsArray[fieldsArray[i]['id_color']]['color_hex_code']},
+            ownerColor: {idColor: ownerColorId, colorHexCode: ownerColorHexCode},
+            plantColor:{idColor: null, colorHexCode: '#ffffff'},
+            color: {idColor: ownerColorId, colorHexCode: ownerColorHexCode},
             city: {idCity: fieldsArray[i]['id_place'], cityName: placesArray[fieldsArray[i]['id_place']]['place_name']},
             plants: planted,
             fieldArea: fieldsArray[i]['area'],
             description: fieldsArray[i]['description'],
-            owner: fieldsArray[i]['owner']
+            owner: idOwner
         });
 
-        console.log("fields ids: "+polygon.idField);
+        if(planted.length > 0)
+        {
+            var plant = planted[0];
+            var plantColorId = plant['idColor'];
+            var plantColorHexCode = colorsArray[plantColorId]['color_hex_code'];
+            polygon.plantColor = {idColor: plantColorId, colorHexCode: plantColorHexCode};
+        }
 
         (function(polygonWrap)
         {
@@ -667,7 +777,32 @@ function rgb2hex(rgb) {
     }
 }
 
-function arraySubtraction (a1, a2)
+function arraySubtraction(a1, a2)
 {
     return $(a1).not(a2).get();
+}
+
+function invertColor(hex) {
+    if (hex.indexOf('#') === 0) {
+        hex = hex.slice(1);
+    }
+    // convert 3-digit hex to 6-digits.
+    if (hex.length === 3) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    }
+    if (hex.length !== 6) {
+        throw new Error('Invalid HEX color.');
+    }
+    // invert color components
+    var r = (255 - parseInt(hex.slice(0, 2), 16)).toString(16),
+        g = (255 - parseInt(hex.slice(2, 4), 16)).toString(16),
+        b = (255 - parseInt(hex.slice(4, 6), 16)).toString(16);
+    // pad each with zeros and return
+    return '#' + padZero(r) + padZero(g) + padZero(b);
+}
+
+function padZero(str, len) {
+    len = len || 2;
+    var zeros = new Array(len).join('0');
+    return (zeros + str).slice(-len);
 }

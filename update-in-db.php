@@ -16,8 +16,9 @@
     $id_place =  htmlentities($my_data['idPlace'], ENT_QUOTES, "UTF-8");
     $area =  htmlentities($my_data['area'], ENT_QUOTES, "UTF-8");
     $description = htmlentities($my_data['description'], ENT_QUOTES, "UTF-8");
-    $id_color = htmlentities($my_data['idColor'], ENT_QUOTES, "UTF-8");
-    $owner = htmlentities($my_data['owner'], ENT_QUOTES, "UTF-8");
+    $id_owner = htmlentities($my_data['idOwner'], ENT_QUOTES, "UTF-8");
+    if($id_owner == '')
+        $id_owner = null;
     $plants_to_add = $my_data['plantsToAdd'];
     $plants_to_delete = $my_data['plantsToDelete'];
 
@@ -39,11 +40,11 @@
     {
         $connection->autocommit(false);  // begin transaction
 
-        $sql_query = "UPDATE fields SET id_place = ?, area = ?, id_color = ?, owner = ?, description = ? WHERE id_field = ?";
+        $sql_query = "UPDATE fields SET id_place = ?, area = ?, id_owner = ?, description = ? WHERE id_field = ?";
         $stmt = $connection->prepare($sql_query);
         if(!$stmt)
             throw new Exception("error prepare stmt update fields ".$stmt->errno);
-        $stmt->bind_param("idissi", $id_place, $area, $id_color, $owner, $description, $id_field);
+        $stmt->bind_param("idisi", $id_place, $area, $id_owner, $description, $id_field);
 
         if(!$stmt->execute())
             throw new Exception("error stmt execute update fields ".$stmt->errno);

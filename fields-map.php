@@ -20,7 +20,6 @@
         </div>
         <div id = "menu">
             <div id = "userMenu">
-                Testowy tekst
                 <br/>
                 <br/>
                 <input id = "createPolygon" type = "button" value = "create polygon" onclick="createPolygonFromMarkers();" />
@@ -30,24 +29,31 @@
                     Utwórz nowy obszar <input type="radio" name="mode" value="create" /> <br/>
                     Edycja <input type="radio" name="mode" value="edit" /> <br/>
                 </form>
+                <br/>
+                <form id = "fields_coloring_selector">
+                    koloruj według właściciela <input type="radio" name="mode" value="owner_coloring" checked /> <br/>
+                    koloruj według rośliny <input type="radio" name="mode" value="plant_coloring" /> <br/>
+                </form>
                 <div id="editor" style="margin-top: 40px;">
                     <form id="editingForm" method="post">
                         Właściciel <br/>
-                        <textarea id="owner" name="owner" rows="1" cols = "30"></textarea> <br/>
+                        <select id="owners" name="owners" style="width: 200px" ></select> <br/>
                         Najbliższa miejscowość <br/>
                         <select id = "places" name = "places">
                         </select> <br/>
                         <br/>Pole powierzchni [ha]<br/>
                         <input id = "area_field" type="text" name="area" /> <br/>
                         <br/>Posadzone rośliny <br/>
-                        <select id = "plants" name = "plants" multiple style="width: 200px">
+                        <select id = "plants" name = "plants" style="width: 200px">
                         </select> <br/>
                         <br/>Opis <br/>
                         <textarea id="descr" name="descr" rows="8" cols = "60"></textarea> <br/>
+                        <!--
                         <br/>Kolor <br/>
                         <select id = "colors" name = "color" style="width:100px;">
                         </select> <br/>
                         <br/>
+                        -->
                         <input type="button" value = "Zapisz zmiany" onclick="confirmChanges();"/>
 
                     </form>
@@ -62,7 +68,7 @@
     </div>
     <div style = "clear:both" ></div>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBeheJaSAo9RkDQFtCJLKfbJgRCW1NvvEs"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCT0-f9kkWY4sC6dVBrtAKH91MOxkj9GVY"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 <script type = "text/javascript" src = "js/map-data-script.js"></script>
 <script src="js/styling-functions.js"></script>

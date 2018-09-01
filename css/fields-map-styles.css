@@ -53,4 +53,10 @@ html, body
     flex: 1;
 }
 
+option
+{
+    padding: 5px;
+    font-size: 14px;
+}
+
 
